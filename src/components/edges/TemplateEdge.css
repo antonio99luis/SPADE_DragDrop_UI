@@ -1,0 +1,17 @@
+.template-edge-path {
+  stroke-width: 1.5 !important;
+}
+
+.template-edge-label {
+  font-size: 13px;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+
+.template-edge-selected {
+  stroke: #ff9800 !important;
+}

@@ -1,0 +1,32 @@
+.node-header {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  width: 180px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-left: 6px;
+  margin-right: auto;
+}
+
+.node-header-header {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  
+}
+
+.node-header-img {
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 20%;
+  background: #fff;
+}
+
+.node-header-title {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #333;
+  background: #fff;
+}

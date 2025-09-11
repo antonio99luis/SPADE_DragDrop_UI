@@ -1,0 +1,22 @@
+.inheritance-edge-path {
+  stroke-width: 1.5 !important;
+}
+
+.inheritance-edge-selected {
+  stroke: #ff9800 !important;
+}
+
+.inheritance-edge-label {
+  font-size: 16px;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+.inheritance-edge-label-text {
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 4px;
+}

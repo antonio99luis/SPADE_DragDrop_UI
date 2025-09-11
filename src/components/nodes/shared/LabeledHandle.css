@@ -1,0 +1,26 @@
+.labeled-handle {
+  display: flex;
+  align-items: center;
+  height: 25px; /* or your preferred row height */
+  position: relative;
+}
+
+.lh-left {
+  flex-direction: row;
+}
+
+.lh-right {
+  flex-direction: row-reverse;
+}
+
+.labeled-handle-label {
+  margin: 0 6px;
+  font-size: 0.85em;
+  color: #555;
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 0px 6px;
+  user-select: none;
+  pointer-events: none;
+}
+

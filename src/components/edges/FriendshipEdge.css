@@ -1,0 +1,32 @@
+.friendship-edge-path {
+  stroke: #29bc5c !important;
+  stroke-width: 3 !important;
+  transition: filter 0.2s;
+}
+
+.friendship-edge-selected {
+  stroke: #ff9800 !important;
+}
+
+.friendship-edge-label {
+  font-size: 16px;
+  fill: #29bc5c;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+.friendship-edge-label-text {
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 4px;
+}
+
+.friendship-edge-label-emoji {
+  font-size: 25px; 
+  stroke: none;
+  stroke-width: 0;
+  dominant-baseline: middle;
+}
