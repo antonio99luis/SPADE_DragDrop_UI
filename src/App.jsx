@@ -9,7 +9,7 @@ import {
   addEdge,
   MarkerType,
 } from "@xyflow/react";
-
+import { generateSpadeCode } from './utils/codeGenerator';
 import AgentNode from "./components/nodes/agent/AgentNode";
 import BehaviourNode from "./components/nodes/behaviour/BehaviourNode";
 import TemplateNode from "./components/nodes/template/TemplateNode";
@@ -333,50 +333,12 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedNodes, selectedEdges, onNodesDelete, onEdgesDelete]);
 
-  const handleGenerateSpade = async () => {
-    // Security check: Agent class names must be unique, Behaviour class names must be unique
-    const agentClassNames = nodes
-      .filter((n) => n.type === "agent")
-      .map((n) => (n.data.class || "").trim())
-      .filter(Boolean);
-    const agentNames = nodes
-      .filter((n) => n.type === "agent")
-      .map((n) => (n.data.name || "").trim())
-      .filter(Boolean);
-    const behaviourClassNames = nodes
-      .filter((n) => n.type === "behaviour")
-      .map((n) => (n.data.class || "").trim())
-      .filter(Boolean);
-
-    const hasDuplicate = (arr) => new Set(arr).size !== arr.length;
-
-    if (hasDuplicate(agentClassNames)) {
-      alert(
-        "ERROR generating code:\n\tEach Agent node must have a unique Class name."
-      );
-      return;
-    }
-    if (hasDuplicate(agentNames)) {
-      alert(
-        "ERROR generating code:\n\tEach Agent node must have a unique Name."
-      );
-      return;
-    }
-    if (hasDuplicate(behaviourClassNames)) {
-      alert(
-        "ERROR generating code:\n\tEach Behaviour node must have a unique Class name."
-      );
-      return;
-    }
-
-    const response = await fetch("http://localhost:8000/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nodes, edges }),
-    });
-    const data = await response.json();
+  const handleGenerateSpade = () => {
+    
+     const finalCode = generateSpadeCode(nodes, edges);
+    
     // Trigger download
-    const blob = new Blob([data.code], { type: "text/x-python" });
+    const blob = new Blob([finalCode], { type: "text/x-python" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
