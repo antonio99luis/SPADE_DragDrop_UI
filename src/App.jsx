@@ -10,6 +10,7 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import { generateSpadeCode } from './utils/codeGenerator';
+import { NODE_TYPES,EDGE_TYPES, HANDLE_KEYS, DEFAULTS } from "./commons/constants";
 import AgentNode from "./components/nodes/agent/AgentNode";
 import BehaviourNode from "./components/nodes/behaviour/BehaviourNode";
 import TemplateNode from "./components/nodes/template/TemplateNode";
@@ -23,15 +24,8 @@ import TemplateEdge from "./components/edges/TemplateEdge";
 import NodeToolbar from "./components/ui/NodeToolbar";
 import "@xyflow/react/dist/style.css";
 
-const initialNodes = [
-  // Example: Start with no nodes, or add one agent/behaviour node as a template
-  // {
-  //   id: '1',
-  //   type: 'agent',
-  //   position: { x: 100, y: 100 },
-  //   data: { name: 'Agent', host: '', onChange: handleNodeDataChange },
-  // },
-];
+
+const initialNodes = [];
 const initialEdges = [];
 
 const nodeTypes = {
@@ -50,7 +44,7 @@ const edgeTypes = {
 
 function getNextAgentNumber(nodes) {
   const usedNumbers = nodes
-    .filter((n) => n.type === "agent")
+    .filter((n) => n.type === NODE_TYPES.AGENT)
     .map((n) => {
       const match = (n.data.class || "").match(/^MyAgent(\d+)$/);
       return match ? parseInt(match[1], 10) : null;
@@ -66,7 +60,7 @@ function getNextAgentNumber(nodes) {
 
 function getNextBehaviourNumber(nodes) {
   const usedNumbers = nodes
-    .filter((n) => n.type === "behaviour")
+    .filter((n) => n.type === NODE_TYPES.BEHAVIOUR)
     .map((n) => {
       const match = (n.data.class || "").match(/^MyBehaviour(\d+)$/);
       return match ? parseInt(match[1], 10) : null;
@@ -119,43 +113,43 @@ export default function App() {
 
       // Friendship: agent to agent, both use 'friendship' handle
       if (
-        sourceNode?.type === "agent" &&
-        targetNode?.type === "agent" &&
-        params.sourceHandle === "friendship-source" &&
-        params.targetHandle === "friendship-target" &&
+        sourceNode?.type === NODE_TYPES.AGENT &&
+        targetNode?.type === NODE_TYPES.AGENT &&
+        params.sourceHandle === HANDLE_KEYS.FRIENDSHIP_SOURCE &&
+        params.targetHandle === HANDLE_KEYS.FRIENDSHIP_TARGET &&
         params.source !== params.target
       ) {
-        setEdges((eds) => addEdge({ ...params, type: "friendship" }, eds));
+        setEdges((eds) => addEdge({ ...params, type: EDGE_TYPES.FRIENDSHIP }, eds));
       }
       // AgentBehaviour: agent (source, 'behaviour') to behaviour (target, 'behaviour')
       else if (
-        sourceNode?.type === "agent" &&
-        targetNode?.type === "behaviour" &&
-        params.sourceHandle === "behaviour" &&
-        params.targetHandle === "behaviour"
+        sourceNode?.type === NODE_TYPES.AGENT &&
+        targetNode?.type === NODE_TYPES.BEHAVIOUR &&
+        params.sourceHandle === HANDLE_KEYS.BEHAVIOUR &&
+        params.targetHandle === HANDLE_KEYS.BEHAVIOUR
       ) {
-        setEdges((eds) => addEdge({ ...params, type: "agentBehaviour" }, eds));
+        setEdges((eds) => addEdge({ ...params, type: EDGE_TYPES.AGENT_BEHAVIOUR }, eds));
       }
       // Inheritance: agent to agent, both use 'inheritance' handle
       else if (
-        sourceNode?.type === "agent" &&
-        targetNode?.type === "agent" &&
-        params.sourceHandle === "inheritance-source" &&
-        params.targetHandle === "inheritance-target"
+        sourceNode?.type === NODE_TYPES.AGENT &&
+        targetNode?.type === NODE_TYPES.AGENT &&
+        params.sourceHandle === HANDLE_KEYS.INHERITANCE_SOURCE &&
+        params.targetHandle === HANDLE_KEYS.INHERITANCE_TARGET
       ) {
         // Only allow one outgoing inheritance edge per source
         const alreadyHasInheritance = edges.some(
           (e) =>
             e.source === params.source &&
-            e.sourceHandle === "inheritance-source" &&
-            e.type === "inheritance"
+            e.sourceHandle === HANDLE_KEYS.INHERITANCE_SOURCE &&
+            e.type === EDGE_TYPES.INHERITANCE
         );
         if (!alreadyHasInheritance) {
           setEdges((eds) =>
             addEdge(
               {
                 ...params,
-                type: "inheritance",
+                type: EDGE_TYPES.INHERITANCE,
                 markerStart: {
                   type: MarkerType.ArrowClosed,
                   orient: 'auto-start-reverse',
@@ -170,20 +164,20 @@ export default function App() {
       }
       // TemplateEdge: behaviour (source, 'template') to template (target, 'template')
       else if (
-        sourceNode?.type === "behaviour" &&
-        targetNode?.type === "template" &&
-        params.sourceHandle === "template" &&
-        params.targetHandle === "template"
+        sourceNode?.type === NODE_TYPES.BEHAVIOUR &&
+        targetNode?.type === NODE_TYPES.TEMPLATE &&
+        params.sourceHandle === HANDLE_KEYS.TEMPLATE &&
+        params.targetHandle === HANDLE_KEYS.TEMPLATE
       ) {
         // Only allow one outgoing template edge per behaviour node
         const alreadyHasTemplate = edges.some(
           (e) =>
             e.source === params.source &&
-            e.sourceHandle === "template" &&
-            e.type === "template"
+            e.sourceHandle === HANDLE_KEYS.TEMPLATE &&
+            e.type === EDGE_TYPES.TEMPLATE
         );
         if (!alreadyHasTemplate) {
-          setEdges((eds) => addEdge({ ...params, type: "template" }, eds));
+          setEdges((eds) => addEdge({ ...params, type: NODE_TYPES.TEMPLATE }, eds));
         }
       }
       // Prevent all other connections
@@ -210,27 +204,27 @@ export default function App() {
       const id = `${type}-${+new Date()}`;
 
       let data;
-      if (type === "agent") {
+      if (type === NODE_TYPES.AGENT) {
         const nextNum = getNextAgentNumber(nodes);
         data = {
           class: `MyAgent${nextNum}`,
           name: `agent${nextNum}`,
-          host: "localhost",
+          host: DEFAULTS.HOST,
           title: "Agent", // Add default title
           onChange: handleNodeDataChange,
           onModalStateChange: handleModalStateChange,
         };
-      } else if (type === "behaviour") {
+      } else if (type === NODE_TYPES.BEHAVIOUR) {
         const nextNum = getNextBehaviourNumber(nodes);
         data = {
           class: `MyBehaviour${nextNum}`,
-          type: "CyclicBehaviour",
+          type: DEFAULTS.BEHAVIOUR_TYPE,
           period: "",
           start_at: "",
           onChange: handleNodeDataChange,
           onModalStateChange: handleModalStateChange, // Add this
         };
-      } else if (type === "template") {
+      } else if (type === NODE_TYPES.TEMPLATE) {
         data = {
           sender: "",
           to: "",
@@ -240,7 +234,7 @@ export default function App() {
           onChange: handleNodeDataChange,
           onModalStateChange: handleModalStateChange, // Add this
         };
-      } else if (type === "stickyNote") {
+      } else if (type === NODE_TYPES.STICKY_NOTE) {
         data = {
           text: "",
           onChange: handleNodeDataChange,
@@ -342,7 +336,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "spade_code.py";
+    a.download = DEFAULTS.GENERATED_FILE_NAME;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -353,7 +347,7 @@ export default function App() {
   }
 
   const handleSave = useCallback(() => {
-    const fileName = prompt("File name:", "spade-project");
+    const fileName = prompt("File name:", DEFAULTS.PROJECT_FILE_NAME);
     if (!fileName) return; // User cancelled
 
     const projectData = {
