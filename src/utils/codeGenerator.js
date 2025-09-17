@@ -1,6 +1,24 @@
+/**
+ * Generates the Python code for SPADE agents and behaviours.
+ * @param {Array} nodes - List of nodes in the graph.
+ * @param {Array} edges - List of edges in the graph.
+ * @returns {string} - The generated Python code.
+ */
+
 export const generateSpadeCode = (nodes, edges) => {
+    // Base template
+    const baseTemplate =  `# SPADE Base Template\n\n`+
+                          `from spade.agent import Agent\n\n`+
+                          `async def main():\n`+
+                          `    while True:\n`+
+                          `        pass\n`;
+
+
+    if (nodes.length === 0 && edges.length === 0) {
+      return baseTemplate;
+    }
     
-    // Security check: Agent class names must be unique, Behaviour class names must be unique
+    // Security checks:
     const agentClassNames = nodes
       .filter((n) => n.type === "agent")
       .map((n) => (n.data.class || "").trim())
@@ -13,9 +31,23 @@ export const generateSpadeCode = (nodes, edges) => {
       .filter((n) => n.type === "behaviour")
       .map((n) => (n.data.class || "").trim())
       .filter(Boolean);
+    const isValidPythonIdentifier = (name) => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
+
 
     const hasDuplicate = (arr) => new Set(arr).size !== arr.length;
 
+    if (agentNames.length > 0 && !agentNames.every(isValidPythonIdentifier)) {
+      alert(
+        "ERROR: All agent names must be valid Python identifiers."
+      );
+      return;
+    }
+    if (behaviourClassNames.length > 0 && !behaviourClassNames.every(isValidPythonIdentifier)) {
+      alert(
+        "ERROR: All behaviour names must be valid Python identifiers."
+      );
+      return;
+    }      
     if (hasDuplicate(agentClassNames)) {
       alert(
         "ERROR generating code:\n\tEach Agent node must have a unique Class name."
@@ -57,7 +89,6 @@ export const generateSpadeCode = (nodes, edges) => {
       agentClass += "    async def setup(self):\n";
 
       // Presence subscriptions
-      console.log(friendsJids)
       if (friendsJids)
         friendsJids.forEach((friendJid) => {
           agentClass += `        await self.presence.subscribe('${friendJid}')\n`;
@@ -130,7 +161,11 @@ export const generateSpadeCode = (nodes, edges) => {
     const agentImport = agents.length > 0 ? "from spade.agent import Agent\n" : "";
 
     // Base template
-    const baseTemplate = `# SPADE Base Template\n\n${agentImport}${behaviourImports}\n\nasync def main():\n    while True:\n        pass\n`;
+    const imports = `import spade\n`+
+                    `from spade import wait_until_finished\n`+
+                    `import asyncio\n`+
+                    `${agentImport}`+
+                    `${behaviourImports}`;
 
     // Generate code for agents
     const agentCodeBlocks = [];
@@ -138,7 +173,6 @@ export const generateSpadeCode = (nodes, edges) => {
       const behIds = agentBehaviours[a.id];
       const behNames = behIds.map((bid) => behaviourNames[bid]);
       const friendsJids = Array.from(agentFriends[a.id]);
-      console.log(friendsJids)
       agentCodeBlocks.push(generateAgentCode(a, behNames, friendsJids));
     });
 
@@ -149,9 +183,16 @@ export const generateSpadeCode = (nodes, edges) => {
       const jid = getAgentJid(a);
       return `    ${agentName.toLowerCase()} = ${auxClass}('${jid}', 'password')`;
     });
+    const agentStarts = agents.map((a) => {
+      const agentName = a.data.name || "Agent";
+      return `    await ${agentName.toLowerCase()}.start()`;
+    });
+    agentInstances.push(...agentStarts);
     const agentStartup = agentInstances.join("\n");
-
+    const agentNamesList = agents.map((a) => a.data.name.toLowerCase()).join(", ");
+    const waitUntilFinishedCode = `    await wait_until_finished([${agentNamesList}])`;
+    
     // Combine all parts
-    const finalCode = `${baseTemplate}\n\n${behaviourCodeBlocks.join("\n\n")}\n\n${agentCodeBlocks.join("\n\n")}\n\nasync def main():\n${agentStartup}\n    while True:\n        pass\n`;
+    const finalCode = `${imports}\n\n${behaviourCodeBlocks.join("\n\n")}\n\n${agentCodeBlocks.join("\n\n")}\n\nasync def main():\n${agentStartup}\n${waitUntilFinishedCode}\n\nif __name__ == "__main__":\n    spade.run(main())`;
     return finalCode;
 };
