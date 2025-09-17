@@ -282,11 +282,20 @@ export default function App() {
   // Handler for deleting nodes
   const onNodesDelete = useCallback(
     (deleted) => {
+      // Remove the deleted nodes
       setNodes((nds) =>
         nds.filter((node) => !deleted.some((d) => d.id === node.id))
       );
+
+      // Remove edges associated with the deleted nodes
+      setEdges((eds) =>
+        eds.filter(
+          (edge) =>
+            !deleted.some((d) => d.id === edge.source || d.id === edge.target)
+        )
+      );
     },
-    [setNodes]
+    [setNodes, setEdges]
   );
 
   // Handler for deleting edges
