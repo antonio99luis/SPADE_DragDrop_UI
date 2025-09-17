@@ -8,7 +8,6 @@ import './AgentNode.css';
 import ConfigurationModal from '../../modals/ConfigurationModal';
 import md5 from 'blueimp-md5';
 import { toCamelCase } from '../../../utils/stringUtils';
-import InputField from '../../shared/InputFIeld';
 
 // Returns the gravatar URL for a given jid string (e.g., "name@host")
 function buildAvatarUrl(jid) {
