@@ -5,17 +5,10 @@ import NodeHeader from '../shared/NodeHeader';
 import NodeDivider from '../shared/NodeDivider';
 import agentSVG from '../../../assets/nodeSVG/agent.svg';
 import './AgentNode.css';
-import ConfigurationModal from '../../modals/shared/ConfigurationModal';
+import ConfigurationModal from '../../modals/ConfigurationModal';
 import md5 from 'blueimp-md5';
-
-// Helper to autocorrect class names to CamelCase
-function toCamelCase(str) {
-  return str
-    .split(' ')
-    .filter(Boolean)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('');
-}
+import { toCamelCase } from '../../../utils/stringUtils';
+import InputField from '../../shared/InputFIeld';
 
 // Returns the gravatar URL for a given jid string (e.g., "name@host")
 function buildAvatarUrl(jid) {
