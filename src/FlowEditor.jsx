@@ -1,4 +1,7 @@
 import React, { useCallback, useRef, useState } from "react";
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './theme'; 
+
 import {
   ReactFlow,
   MiniMap,
@@ -6,11 +9,10 @@ import {
   Background,
   useNodesState,
   useEdgesState,
-  addEdge,
-  MarkerType,
+  addEdge
 } from "@xyflow/react";
 import { generateSpadeCode } from './utils/codeGenerator';
-import { NODE_TYPES,EDGE_TYPES, HANDLE_KEYS, DEFAULTS } from "./commons/constants";
+import {DEFAULTS } from "./commons/constants";
 import AgentNode from "./components/nodes/agent/AgentNode";
 import BehaviourNode from "./components/nodes/behaviour/BehaviourNode";
 import TemplateNode from "./components/nodes/template/TemplateNode";
@@ -23,7 +25,7 @@ import TemplateEdge from "./components/edges/TemplateEdge";
 
 import NodeToolbar from "./components/ui/NodeToolbar";
 import "@xyflow/react/dist/style.css";
-
+import {checkConnectionType, createNodeData} from "./commons/flowUtils";
 
 const initialNodes = [];
 const initialEdges = [];
@@ -42,39 +44,9 @@ const edgeTypes = {
   template: TemplateEdge,
 };
 
-function getNextAgentNumber(nodes) {
-  const usedNumbers = nodes
-    .filter((n) => n.type === NODE_TYPES.AGENT)
-    .map((n) => {
-      const match = (n.data.class || "").match(/^MyAgent(\d+)$/);
-      return match ? parseInt(match[1], 10) : null;
-    })
-    .filter((n) => n !== null)
-    .sort((a, b) => a - b);
 
-  for (let i = 1; i <= usedNumbers.length + 1; i++) {
-    if (!usedNumbers.includes(i)) return i;
-  }
-  return 1;
-}
 
-function getNextBehaviourNumber(nodes) {
-  const usedNumbers = nodes
-    .filter((n) => n.type === NODE_TYPES.BEHAVIOUR)
-    .map((n) => {
-      const match = (n.data.class || "").match(/^MyBehaviour(\d+)$/);
-      return match ? parseInt(match[1], 10) : null;
-    })
-    .filter((n) => n !== null)
-    .sort((a, b) => a - b);
-
-  for (let i = 1; i <= usedNumbers.length + 1; i++) {
-    if (!usedNumbers.includes(i)) return i;
-  }
-  return 1;
-}
-
-export default function App() {
+export default function FlowEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef(null);
@@ -82,24 +54,22 @@ export default function App() {
   const [selectedEdges, setSelectedEdges] = useState([]);
   const [isAnyModalOpen, setIsAnyModalOpen] = useState(false);
 
-  // Move this function BEFORE onDrop
   const handleModalStateChange = useCallback((isOpen) => {
     setIsAnyModalOpen(isOpen);
   }, []);
 
-  // This handler already supports updating any field
   const handleNodeDataChange = (id, field, value) => {
     setNodes((nds) =>
       nds.map((node) =>
         node.id === id
           ? {
-              ...node,
-              data: {
-                ...node.data,
-                [field]: value,
-                onChange: handleNodeDataChange,
-              },
-            }
+            ...node,
+            data: {
+              ...node.data,
+              [field]: value,
+              onChange: handleNodeDataChange,
+            },
+          }
           : node
       )
     );
@@ -108,91 +78,28 @@ export default function App() {
   const onConnect = useCallback(
     (params) => {
       console.log("onConnect", params);
-      const sourceNode = nodes.find((n) => n.id === params.source);
-      const targetNode = nodes.find((n) => n.id === params.target);
-
-      // Friendship: agent to agent, both use 'friendship' handle
-      if (
-        sourceNode?.type === NODE_TYPES.AGENT &&
-        targetNode?.type === NODE_TYPES.AGENT &&
-        params.sourceHandle === HANDLE_KEYS.FRIENDSHIP_SOURCE &&
-        params.targetHandle === HANDLE_KEYS.FRIENDSHIP_TARGET &&
-        params.source !== params.target
-      ) {
-        setEdges((eds) => addEdge({ ...params, type: EDGE_TYPES.FRIENDSHIP }, eds));
-      }
-      // AgentBehaviour: agent (source, 'behaviour') to behaviour (target, 'behaviour')
-      else if (
-        sourceNode?.type === NODE_TYPES.AGENT &&
-        targetNode?.type === NODE_TYPES.BEHAVIOUR &&
-        params.sourceHandle === HANDLE_KEYS.BEHAVIOUR &&
-        params.targetHandle === HANDLE_KEYS.BEHAVIOUR
-      ) {
-        setEdges((eds) => addEdge({ ...params, type: EDGE_TYPES.AGENT_BEHAVIOUR }, eds));
-      }
-      // Inheritance: agent to agent, both use 'inheritance' handle
-      else if (
-        sourceNode?.type === NODE_TYPES.AGENT &&
-        targetNode?.type === NODE_TYPES.AGENT &&
-        params.sourceHandle === HANDLE_KEYS.INHERITANCE_SOURCE &&
-        params.targetHandle === HANDLE_KEYS.INHERITANCE_TARGET
-      ) {
-        // Only allow one outgoing inheritance edge per source
-        const alreadyHasInheritance = edges.some(
-          (e) =>
-            e.source === params.source &&
-            e.sourceHandle === HANDLE_KEYS.INHERITANCE_SOURCE &&
-            e.type === EDGE_TYPES.INHERITANCE
-        );
-        if (!alreadyHasInheritance) {
-          setEdges((eds) =>
-            addEdge(
-              {
-                ...params,
-                type: EDGE_TYPES.INHERITANCE,
-                markerStart: {
-                  type: MarkerType.ArrowClosed,
-                  orient: 'auto-start-reverse',
-                  width: 20,
-                  height: 20,
-                },
-              },
-              eds
-            )
-          );
-        }
-      }
-      // TemplateEdge: behaviour (source, 'template') to template (target, 'template')
-      else if (
-        sourceNode?.type === NODE_TYPES.BEHAVIOUR &&
-        targetNode?.type === NODE_TYPES.TEMPLATE &&
-        params.sourceHandle === HANDLE_KEYS.TEMPLATE &&
-        params.targetHandle === HANDLE_KEYS.TEMPLATE
-      ) {
-        // Only allow one outgoing template edge per behaviour node
-        const alreadyHasTemplate = edges.some(
-          (e) =>
-            e.source === params.source &&
-            e.sourceHandle === HANDLE_KEYS.TEMPLATE &&
-            e.type === EDGE_TYPES.TEMPLATE
-        );
-        if (!alreadyHasTemplate) {
-          setEdges((eds) => addEdge({ ...params, type: NODE_TYPES.TEMPLATE }, eds));
-        }
-      }
-      // Prevent all other connections
-      else {
+      const edgeType = checkConnectionType(
+        nodes,
+        edges,
+        params.source,
+        params.target,
+        params.sourceHandle,
+        params.targetHandle
+      );
+      if (edgeType) {
+        setEdges((eds) => addEdge({ ...params, type: edgeType }, eds));
+      }else {
         // Optionally, show a warning or ignore
       }
-    },
     [nodes, setEdges, edges]
+    }
   );
 
   // When creating agent nodes, initialize the new "class" field
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
       const type = event.dataTransfer.getData("application/reactflow");
       if (!type) return;
 
@@ -201,77 +108,18 @@ export default function App() {
         y: event.clientY - reactFlowBounds.top,
       };
 
-      const id = `${type}-${+new Date()}`;
+      const id = `${type}-${Date.now()}`;
+      const data = createNodeData(type, nodes, handleNodeDataChange, handleModalStateChange);
 
-      let data;
-      if (type === NODE_TYPES.AGENT) {
-        const nextNum = getNextAgentNumber(nodes);
-        data = {
-          class: `MyAgent${nextNum}`,
-          name: `agent${nextNum}`,
-          host: DEFAULTS.HOST,
-          title: "Agent", // Add default title
-          onChange: handleNodeDataChange,
-          onModalStateChange: handleModalStateChange,
-        };
-      } else if (type === NODE_TYPES.BEHAVIOUR) {
-        const nextNum = getNextBehaviourNumber(nodes);
-        data = {
-          class: `MyBehaviour${nextNum}`,
-          type: DEFAULTS.BEHAVIOUR_TYPE,
-          period: "",
-          start_at: "",
-          onChange: handleNodeDataChange,
-          onModalStateChange: handleModalStateChange, // Add this
-        };
-      } else if (type === NODE_TYPES.TEMPLATE) {
-        data = {
-          sender: "",
-          to: "",
-          body: "",
-          thread: "",
-          metadataCode: "{}",
-          onChange: handleNodeDataChange,
-          onModalStateChange: handleModalStateChange, // Add this
-        };
-      } else if (type === NODE_TYPES.STICKY_NOTE) {
-        data = {
-          text: "",
-          onChange: handleNodeDataChange,
-          onModalStateChange: handleModalStateChange, // Add this
-        };
-      } else {
-        data = {
-          onModalStateChange: handleModalStateChange, // Add this
-        };
-      }
-
-      setNodes((nds) =>
-        nds.concat({
-          id,
-          type,
-          position,
-          data,
-        })
-      );
+      setNodes((nds) => nds.concat({ id, type, position, data }));
     },
-    [setNodes, nodes, handleNodeDataChange, handleModalStateChange] // Add handleModalStateChange to dependencies
-  );
+    [setNodes, createNodeData]
+  ); 
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
-
-  // Always inject onChange for agent and behaviour nodes
-  const nodesWithHandlers = nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      onChange: handleNodeDataChange,
-      onModalStateChange: handleModalStateChange, // Add to ALL nodes
-    },
-  }));
 
   // Handler for selection changes
   const onSelectionChange = useCallback(({ nodes, edges }) => {
@@ -337,9 +185,9 @@ export default function App() {
   }, [selectedNodes, selectedEdges, onNodesDelete, onEdgesDelete]);
 
   const handleGenerateSpade = () => {
-    
-     const finalCode = generateSpadeCode(nodes, edges);
-    
+
+    const finalCode = generateSpadeCode(nodes, edges);
+
     // Trigger download
     const blob = new Blob([finalCode], { type: "text/x-python" });
     const url = URL.createObjectURL(blob);
@@ -406,7 +254,7 @@ export default function App() {
       reader.onload = (e) => {
         try {
           const projectData = JSON.parse(e.target.result);
-          
+
           // Validate file format
           if (!projectData.version || !projectData.nodes || !projectData.edges) {
             alert("Error: The file does not have a valid format.");
@@ -424,7 +272,7 @@ export default function App() {
 
           setNodes(restoredNodes);
           setEdges(projectData.edges);
-          
+
           alert(`Project loaded successfully!\nCreation date: ${new Date(projectData.timestamp).toLocaleString()}`);
         } catch (error) {
           alert("Error: Could not read the file. Make sure it is a valid JSON file.");
@@ -437,48 +285,50 @@ export default function App() {
   }, [nodes, edges, setNodes, setEdges, handleNodeDataChange]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        width: "100vw",
-        height: "100vh",
-        position: "relative",
-      }}
-    >
-      
-      <NodeToolbar 
-        onDragStart={onDragStart} 
-        onGenerateSpade={handleGenerateSpade}
-        onSave={handleSave}
-        onLoad={handleLoad}
-        modalBlocked={isAnyModalOpen}
-      />
-      
+    <ThemeProvider theme={theme}>
       <div
-        ref={reactFlowWrapper}
-        style={{ flex: 1, height: "100%" }}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
+        style={{
+          display: "flex",
+          width: "100vw",
+          height: "100vh",
+          position: "relative",
+        }}
       >
-      
-        <ReactFlow
-          nodes={nodesWithHandlers}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onSelectionChange={onSelectionChange}
-          nodesDraggable={!isAnyModalOpen} // Disable dragging when modal is open
-          nodesConnectable={!isAnyModalOpen} // Disable connections when modal is open
-          elementsSelectable={!isAnyModalOpen} // Disable selection when modal is open
+
+        <NodeToolbar
+          onDragStart={onDragStart}
+          onGenerateSpade={handleGenerateSpade}
+          onSave={handleSave}
+          onLoad={handleLoad}
+          modalBlocked={isAnyModalOpen}
+        />
+
+        <div
+          ref={reactFlowWrapper}
+          style={{ flex: 1, height: "100%" }}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
         >
-          <Controls />
-          <MiniMap />
-          <Background variant="dots" gap={12} size={1} />
-        </ReactFlow>
+
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onSelectionChange={onSelectionChange}
+            nodesDraggable={!isAnyModalOpen} // Disable dragging when modal is open
+            nodesConnectable={!isAnyModalOpen} // Disable connections when modal is open
+            elementsSelectable={!isAnyModalOpen} // Disable selection when modal is open
+          >
+            <Controls />
+            <MiniMap />
+            <Background variant="dots" gap={12} size={1} />
+          </ReactFlow>
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }

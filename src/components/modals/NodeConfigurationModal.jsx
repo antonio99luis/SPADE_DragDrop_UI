@@ -1,15 +1,23 @@
+// src/components/modals/NodeConfigurationModal.jsx
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import './ConfigurationModal.css';
 
-export default function ConfigurationModal({ 
-  open, 
-  onClose, 
-  title, 
-  onTitleChange, // New prop for handling title changes
+const NodeConfigurationModal = ({ 
+  open,
+  title,
+  subtitle,
+  onClose,
+  onSave,
+  onTitleChange,
   children,
+  errors = {},
+  isValid = true,
   width = "50%" 
-}) {
+}) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(title);
 
@@ -24,10 +32,9 @@ export default function ConfigurationModal({
     
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
-        // If editing title, cancel edit instead of closing modal
         if (isEditingTitle) {
           setIsEditingTitle(false);
-          setTempTitle(title); // Reset to original title
+          setTempTitle(title);
         } else {
           onClose();
         }
@@ -63,7 +70,7 @@ export default function ConfigurationModal({
   };
 
   const handleTitleCancel = () => {
-    setTempTitle(title); // Reset to original
+    setTempTitle(title);
     setIsEditingTitle(false);
   };
 
@@ -75,11 +82,23 @@ export default function ConfigurationModal({
     }
   };
 
+  const handleBackdropClick = (e) => {
+    // Only close if clicking the backdrop itself, not its children
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   if (!open) return null;
 
-  // Use createPortal to render modal at document.body level
   return createPortal(
-    <div className="node-setup-modal-backdrop" onClick={onClose}>
+    <div 
+      className="node-setup-modal-backdrop" 
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       <div 
         className="node-setup-modal-content" 
         style={{ width }}
@@ -117,7 +136,7 @@ export default function ConfigurationModal({
               </div>
             ) : (
               <div className="node-setup-modal-title-display">
-                <h2 className="node-setup-modal-title">{title}</h2>
+                <h2 id="modal-title" className="node-setup-modal-title">{title}</h2>
                 {onTitleChange && (
                   <button
                     onClick={handleTitleEdit}
@@ -141,10 +160,48 @@ export default function ConfigurationModal({
         </div>
         
         <div className="node-setup-modal-body">
-          {children}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {subtitle && (
+              <Box>
+                <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+                  {subtitle}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Configure the basic settings for this node.
+                </Typography>
+              </Box>
+            )}
+
+            {children}
+
+            {/* Validation summary */}
+            {Object.keys(errors).length > 0 && (
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+                <Typography variant="body2" color="error.dark">
+                  Please fill in all required fields before saving.
+                </Typography>
+              </Box>
+            )}
+
+            {/* Save and Cancel buttons */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+              <Button variant="outlined" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={onSave}
+                disabled={!isValid}
+              >
+                Save Changes
+              </Button>
+            </Box>
+          </Box>
         </div>
       </div>
     </div>,
-    document.body // Render at body level, not inside node
+    document.body
   );
-}
+};
+
+export default NodeConfigurationModal;

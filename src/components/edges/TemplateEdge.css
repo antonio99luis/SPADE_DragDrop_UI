@@ -13,5 +13,5 @@
 
 
 .template-edge-selected {
-  stroke: #ff9800 !important;
+  stroke: var(--primary-color) !important;
 }
