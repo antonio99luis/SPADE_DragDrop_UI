@@ -100,7 +100,7 @@ export const DEFAULT_CONFIG_CODE = {
 };
 
 export const TEMPLATE_CONFIG = {
-  requiredFields: ['sender', 'to', 'body'],
+  requiredFields: [],
   icon: templateSVG,
   title: "Template",
   subtitle: "Message Template Configuration",
