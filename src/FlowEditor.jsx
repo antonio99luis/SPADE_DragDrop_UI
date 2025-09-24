@@ -218,8 +218,6 @@ export default function FlowEditor() {
   }, [selectedNodes, selectedEdges, onNodesDelete, onEdgesDelete]);
 
   const handleGenerateSpade = () => {
-
-  const handleGenerateSpade = () => {
     const finalCode = generateSpadeCode(nodes, edges);
 
     const blob = new Blob([finalCode], { type: "text/x-python" });
