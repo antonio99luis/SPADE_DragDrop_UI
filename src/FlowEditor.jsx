@@ -1,4 +1,5 @@
-import React, { useCallback, useRef, useState } from "react";
+// src/FlowEditor.jsx
+import React, { useCallback, useRef, useState, useMemo } from "react";
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme'; 
 
@@ -30,21 +31,12 @@ import {checkConnectionType, createNodeData} from "./commons/flowUtils";
 const initialNodes = [];
 const initialEdges = [];
 
-const nodeTypes = {
-  agent: AgentNode,
-  behaviour: BehaviourNode,
-  template: TemplateNode,
-  stickyNote: StickyNoteNode,
-};
-
 const edgeTypes = {
   friendship: FriendshipEdge,
   agentBehaviour: AgentBehaviourEdge,
   inheritance: InheritanceEdge,
   template: TemplateEdge,
 };
-
-
 
 export default function FlowEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -57,6 +49,45 @@ export default function FlowEditor() {
   const handleModalStateChange = useCallback((isOpen) => {
     setIsAnyModalOpen(isOpen);
   }, []);
+
+  const nodeTypes = useMemo(() => ({
+    agent: (props) => (
+      <AgentNode 
+        {...props} 
+        data={{
+          ...props.data,
+          onModalStateChange: handleModalStateChange
+        }}
+      />
+    ),
+    behaviour: (props) => (
+      <BehaviourNode 
+        {...props} 
+        data={{
+          ...props.data,
+          onModalStateChange: handleModalStateChange
+        }}
+      />
+    ),
+    template: (props) => (
+      <TemplateNode 
+        {...props} 
+        data={{
+          ...props.data,
+          onModalStateChange: handleModalStateChange
+        }}
+      />
+    ),
+    stickyNote: (props) => (
+      <StickyNoteNode 
+        {...props} 
+        data={{
+          ...props.data,
+          onModalStateChange: handleModalStateChange
+        }}
+      />
+    ),
+  }), [handleModalStateChange]);
 
   const handleNodeDataChange = (id, field, value) => {
     setNodes((nds) =>
@@ -88,14 +119,11 @@ export default function FlowEditor() {
       );
       if (edgeType) {
         setEdges((eds) => addEdge({ ...params, type: edgeType }, eds));
-      }else {
-        // Optionally, show a warning or ignore
       }
+    },
     [nodes, setEdges, edges]
-    }
   );
 
-  // When creating agent nodes, initialize the new "class" field
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
@@ -113,7 +141,7 @@ export default function FlowEditor() {
 
       setNodes((nds) => nds.concat({ id, type, position, data }));
     },
-    [setNodes, createNodeData]
+    [setNodes, nodes, handleNodeDataChange, handleModalStateChange]
   ); 
 
   const onDragOver = useCallback((event) => {
@@ -130,12 +158,10 @@ export default function FlowEditor() {
   // Handler for deleting nodes
   const onNodesDelete = useCallback(
     (deleted) => {
-      // Remove the deleted nodes
       setNodes((nds) =>
         nds.filter((node) => !deleted.some((d) => d.id === node.id))
       );
 
-      // Remove edges associated with the deleted nodes
       setEdges((eds) =>
         eds.filter(
           (edge) =>
@@ -159,7 +185,13 @@ export default function FlowEditor() {
   // Listen for delete key
   React.useEffect(() => {
     const handleKeyDown = (event) => {
-      // Prevent node deletion if focus is on an input, textarea, or contenteditable element
+      console.log('Key pressed:', event.key, 'Modal open:', isAnyModalOpen);
+      
+      if (isAnyModalOpen) {
+        console.log('Prevented deletion - modal is open');
+        return;
+      }
+
       const tag = event.target.tagName?.toLowerCase();
       const isEditable = event.target.isContentEditable;
       if (tag === "input" || tag === "textarea" || isEditable) {
@@ -180,15 +212,16 @@ export default function FlowEditor() {
         }
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedNodes, selectedEdges, onNodesDelete, onEdgesDelete]);
 
   const handleGenerateSpade = () => {
 
+  const handleGenerateSpade = () => {
     const finalCode = generateSpadeCode(nodes, edges);
 
-    // Trigger download
     const blob = new Blob([finalCode], { type: "text/x-python" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -205,7 +238,7 @@ export default function FlowEditor() {
 
   const handleSave = useCallback(() => {
     const fileName = prompt("File name:", DEFAULTS.PROJECT_FILE_NAME);
-    if (!fileName) return; // User cancelled
+    if (!fileName) return;
 
     const projectData = {
       version: "1.0",
@@ -214,7 +247,6 @@ export default function FlowEditor() {
         ...node,
         data: {
           ...node.data,
-          // Remove the onChange function from saved data
           onChange: undefined
         }
       })),
@@ -232,7 +264,6 @@ export default function FlowEditor() {
   }, [nodes, edges]);
 
   const handleLoad = useCallback(() => {
-    // Check if canvas is not empty
     if (nodes.length > 0 || edges.length > 0) {
       const confirmed = window.confirm(
         "Are you sure you want to load a new project?\n\n" +
@@ -242,7 +273,6 @@ export default function FlowEditor() {
       if (!confirmed) return;
     }
 
-    // Create file input element
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
@@ -255,18 +285,17 @@ export default function FlowEditor() {
         try {
           const projectData = JSON.parse(e.target.result);
 
-          // Validate file format
           if (!projectData.version || !projectData.nodes || !projectData.edges) {
             alert("Error: The file does not have a valid format.");
             return;
           }
 
-          // Restore nodes with onChange handler
           const restoredNodes = projectData.nodes.map(node => ({
             ...node,
             data: {
               ...node.data,
-              onChange: handleNodeDataChange
+              onChange: handleNodeDataChange,
+              onModalStateChange: handleModalStateChange
             }
           }));
 
@@ -282,7 +311,7 @@ export default function FlowEditor() {
       reader.readAsText(file);
     };
     input.click();
-  }, [nodes, edges, setNodes, setEdges, handleNodeDataChange]);
+  }, [nodes, edges, setNodes, setEdges, handleNodeDataChange, handleModalStateChange]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -294,7 +323,6 @@ export default function FlowEditor() {
           position: "relative",
         }}
       >
-
         <NodeToolbar
           onDragStart={onDragStart}
           onGenerateSpade={handleGenerateSpade}
@@ -309,7 +337,6 @@ export default function FlowEditor() {
           onDrop={onDrop}
           onDragOver={onDragOver}
         >
-
           <ReactFlow
             nodes={nodes}
             edges={edges}

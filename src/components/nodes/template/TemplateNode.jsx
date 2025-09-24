@@ -2,11 +2,10 @@
 import React, { useMemo } from 'react';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
-import MetadataConfigurationModal from '../../modals/MetadataConfigurationModal';
+import KeyValueTable from '../../forms/KeyValueTable';
 import { TextFormField, TextAreaFormField } from '../../forms/FormField';
 import { useTemplateModalData } from '../../../hooks/useTemplateModalData';
-import { TEMPLATE_CONFIG, DEFAULT_METADATA } from '../../../config/nodeConfigs';
-import Button from '@mui/material/Button';
+import { TEMPLATE_CONFIG } from '../../../config/nodeConfigs';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import './TemplateNode.css';
@@ -53,46 +52,46 @@ const TemplateNode = ({ data, selected, id }) => {
     }
   };
 
-  // Handle metadata save
-  const handleMetadataSave = () => {
-    modalData.saveMetadata((field, value) => {
-      if (data.onChange) {
-        data.onChange(id, field, value);
-      }
-    });
+  // Validate metadata key
+  const validateMetadataKey = (key) => {
+    if (!key.trim()) {
+      return "Key cannot be empty";
+    }
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key.trim())) {
+      return "Key must be a valid identifier (letters, numbers, underscore)";
+    }
+    return null;
   };
 
-  // Handle metadata reset
-  const handleMetadataReset = () => {
-    modalData.resetMetadata((field, value) => {
-      if (data.onChange) {
-        data.onChange(id, field, value);
-      }
-    });
+  // Handle metadata change
+  const handleMetadataChange = (newMetadata) => {
+    modalData.handleTempChange('metadata', newMetadata);
   };
 
   // Memoized attributes for display
-  const attributes = useMemo(() => [
-    { label: "Sender", value: data.sender || 'Not set' },
-    { label: "To", value: data.to || 'Not set' },
-    { label: "Body", value: data.body || 'Not set' },
-    { label: "Thread", value: data.thread || 'Not set' },
-  ], [data]);
+  const attributes = useMemo(() => {
+    const metadataCount = Object.keys(data.metadata || {}).length;
+    
+    return [
+      { label: "Sender", value: data.sender || 'Not set' },
+      { label: "To", value: data.to || 'Not set' },
+      { label: "Body", value: data.body || 'Not set' },
+      { label: "Thread", value: data.thread || 'Not set' },
+      { 
+        label: "Metadata", 
+        value: (
+          <Chip 
+            label={`${metadataCount} ${metadataCount === 1 ? 'entry' : 'entries'}`} 
+            color={metadataCount > 0 ? 'success' : 'default'}
+            size="small"
+          />
+        )
+      }
+    ];
+  }, [data]);
 
   // Check if valid
   const isValid = Object.keys(modalData.errors).length === 0;
-
-  // Check if metadata is valid JSON
-  const isMetadataValid = (metadata) => {
-    try {
-      JSON.parse(metadata || DEFAULT_METADATA);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
-
-  const metadataStatus = isMetadataValid(data.metadataCode) ? 'success' : 'error';
 
   return (
     <>
@@ -101,19 +100,7 @@ const TemplateNode = ({ data, selected, id }) => {
         onDoubleClick={handleDoubleClick}
         icon={TEMPLATE_CONFIG.icon}
         title={data.title || TEMPLATE_CONFIG.title}
-        attributes={[
-          ...attributes,
-          { 
-            label: "Metadata", 
-            value: (
-              <Chip 
-                label={metadataStatus === 'success' ? 'Valid JSON' : 'Invalid JSON'} 
-                color={metadataStatus}
-                size="small"
-              />
-            )
-          }
-        ]}
+        attributes={attributes}
         handles={TEMPLATE_CONFIG.handles}
         className="template-node"
       >
@@ -126,7 +113,9 @@ const TemplateNode = ({ data, selected, id }) => {
           onTitleChange={(newTitle) => modalData.handleTempChange('title', newTitle)}
           errors={modalData.errors}
           isValid={isValid}
+          width="70%" // Make modal wider to accommodate the table
         >
+          {/* Basic Fields */}
           <TextFormField
             label="Sender"
             value={modalData.getCurrentValue('sender')}
@@ -169,31 +158,23 @@ const TemplateNode = ({ data, selected, id }) => {
             helperText="Optional thread identifier for message grouping"
           />
 
-          {/* Configure Metadata Button */}
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={modalData.openMetadataModal}
-              fullWidth
-              sx={{ mb: 1 }}
-              color={isMetadataValid(modalData.getCurrentValue('metadataCode')) ? 'primary' : 'error'}
-            >
-              Configure Message Metadata
-              {!isMetadataValid(modalData.getCurrentValue('metadataCode')) && ' (Invalid JSON)'}
-            </Button>
+          {/* Metadata Section */}
+          <Box sx={{ mt: 3 }}>
+            <KeyValueTable
+              data={modalData.getCurrentValue('metadata') || {}}
+              onChange={handleMetadataChange}
+              label="Message Metadata"
+              keyLabel="Metadata Key"
+              valueLabel="Metadata Value"
+              keyPlaceholder="e.g., priority, category"
+              valuePlaceholder="e.g., high, notification"
+              addButtonText="Add Metadata"
+              emptyMessage="No metadata configured. Add metadata to enhance your messages."
+              validateKey={validateMetadataKey}
+              maxHeight="250px"
+            />
           </Box>
         </NodeConfigurationModal>
-
-        {/* Metadata Configuration Modal */}
-        <MetadataConfigurationModal
-          open={modalData.metadataModalOpen}
-          code={modalData.tempMetadata}
-          onChange={modalData.setTempMetadata}
-          onSave={handleMetadataSave}
-          onCancel={modalData.closeMetadataModal}
-          onReset={handleMetadataReset}
-          title="Configure Message Metadata"
-        />
       </BaseNode>
     </>
   );

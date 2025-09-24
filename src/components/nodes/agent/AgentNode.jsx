@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import md5 from 'blueimp-md5';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
-import { TextFormField, NumberFormField, SwitchFormField,PasswordFormField } from '../../forms/FormField';
+import { TextFormField, NumberFormField, SwitchFormField, PasswordFormField } from '../../forms/FormField';
 import { useModalData } from '../../../hooks/useModalData';
 import { AGENT_CONFIG } from '../../../config/nodeConfigs';
 import Card from '@mui/material/Card';
@@ -11,6 +11,9 @@ import CardContent from '@mui/material/CardContent';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import KeyValueTable from '../../forms/KeyValueTable';
+import Chip from '@mui/material/Chip';
+
 import "./AgentNode.css";
 
 // Utility function
@@ -61,14 +64,46 @@ const AgentNode = ({ data, selected, id }) => {
     }
   };
 
+  // Validate metadata key
+  const validateMetadataKey = (key) => {
+    if (!key.trim()) {
+      return "Key cannot be empty";
+    }
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key.trim())) {
+      return "Key must be a valid identifier (letters, numbers, underscore)";
+    }
+    return null;
+  };
+
+  // Handle metadata change
+  const handleMetadataChange = (newMetadata) => {
+    modalData.handleTempChange('metadata', newMetadata);
+  };
+
+
+
   // Memoized attributes for display
-  const attributes = useMemo(() => [
-    { label: "Class", value: data.class || 'Not set' },
-    { label: "Name", value: data.name || 'Not set' },
-    { label: "Host", value: data.host || 'Not set' },
-    { label: "Port", value: data.port || 5222 },
-    { label: "Verify Security", value: data.verify_security === true ? 'Enabled' : 'Disabled' }
-  ], [data]);
+  const attributes = useMemo(() => {
+    const metadataCount = Object.keys(data.metadata || {}).length;
+
+    return [
+      { label: "Class", value: data.class || 'Not set' },
+      { label: "Name", value: data.name || 'Not set' },
+      { label: "Host", value: data.host || 'Not set' },
+      { label: "Port", value: data.port || 5222 },
+      { label: "Verify Security", value: data.verify_security === true ? 'Enabled' : 'Disabled' },
+      { 
+        label: "Knowledge", 
+        value: (
+          <Chip 
+            label={`${metadataCount} ${metadataCount === 1 ? 'entry' : 'entries'}`} 
+            color={metadataCount > 0 ? 'success' : 'default'}
+            size="small"
+          />
+        )
+      }
+    ];
+  }, [data]);
 
   // Check if valid
   const isValid = Object.keys(modalData.errors).length === 0;
@@ -180,6 +215,22 @@ const AgentNode = ({ data, selected, id }) => {
               </CardContent>
             </Card>
           )}
+          {/* Metadata Section */}
+          <Box sx={{ mt: 3 }}>
+            <KeyValueTable
+              data={modalData.getCurrentValue('metadata') || {}}
+              onChange={handleMetadataChange}
+              label="Knowledge"
+              keyLabel="Knowledge Key"
+              valueLabel="Knowledge Value"
+              keyPlaceholder="e.g., priority, category"
+              valuePlaceholder="e.g., high, notification"
+              addButtonText="Add Knowledge"
+              emptyMessage="No knowledge configured. Add knowledge to enhance your messages."
+              validateKey={validateMetadataKey}
+              maxHeight="250px"
+            />
+          </Box>
         </NodeConfigurationModal>
       </BaseNode>
     </>

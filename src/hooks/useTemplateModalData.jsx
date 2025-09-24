@@ -1,24 +1,25 @@
 // src/hooks/useTemplateModalData.jsx
 import { useState } from 'react';
 import { useModalData } from './useModalData';
-import { DEFAULT_METADATA } from '../config/nodeConfigs';
+
+const DEFAULT_METADATA = {};
 
 export const useTemplateModalData = (initialData, requiredFields = []) => {
   const modalData = useModalData(initialData, requiredFields);
   const [metadataModalOpen, setMetadataModalOpen] = useState(false);
-  const [tempMetadata, setTempMetadata] = useState(initialData.metadataCode || DEFAULT_METADATA);
+  const [tempMetadata, setTempMetadata] = useState(initialData.metadata || DEFAULT_METADATA);
 
   // Open metadata modal
   const openMetadataModal = () => {
-    setTempMetadata(modalData.getCurrentValue('metadataCode') || DEFAULT_METADATA);
+    setTempMetadata(modalData.getCurrentValue('metadata') || DEFAULT_METADATA);
     setMetadataModalOpen(true);
   };
 
   // Save metadata
   const saveMetadata = (onSaveCallback) => {
-    modalData.handleTempChange('metadataCode', tempMetadata);
+    modalData.handleTempChange('metadata', tempMetadata);
     if (onSaveCallback) {
-      onSaveCallback('metadataCode', tempMetadata);
+      onSaveCallback('metadata', tempMetadata);
     }
     setMetadataModalOpen(false);
   };
@@ -26,9 +27,9 @@ export const useTemplateModalData = (initialData, requiredFields = []) => {
   // Reset metadata
   const resetMetadata = (onSaveCallback) => {
     setTempMetadata(DEFAULT_METADATA);
-    modalData.handleTempChange('metadataCode', DEFAULT_METADATA);
+    modalData.handleTempChange('metadata', DEFAULT_METADATA);
     if (onSaveCallback) {
-      onSaveCallback('metadataCode', DEFAULT_METADATA);
+      onSaveCallback('metadata', DEFAULT_METADATA);
     }
   };
 
