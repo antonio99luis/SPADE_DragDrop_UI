@@ -12,7 +12,7 @@
 }
 
 .base-node:hover{
-  border: 2px solid #ff9800;
+  border: 2px solid var(--primary-color);
 }
 
 .base-node-header {

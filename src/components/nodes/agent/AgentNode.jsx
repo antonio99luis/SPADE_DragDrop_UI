@@ -1,223 +1,189 @@
-import React, { useState, useEffect } from 'react';
-import { Handle, Position } from '@xyflow/react';
-import { LabeledHandle } from '../shared/LabeledHandle';
-import NodeHeader from '../shared/NodeHeader';
-import NodeDivider from '../shared/NodeDivider';
-import agentSVG from '../../../assets/nodeSVG/agent.svg';
-import './AgentNode.css';
-import ConfigurationModal from '../../modals/ConfigurationModal';
+// src/components/nodes/agent/AgentNode.jsx
+import React, { useMemo } from "react";
 import md5 from 'blueimp-md5';
-import { toCamelCase } from '../../../utils/stringUtils';
+import BaseNode from '../BaseNode';
+import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
+import { TextFormField, NumberFormField, SwitchFormField } from '../../forms/FormField';
+import { useModalData } from '../../../hooks/useModalData';
+import { AGENT_CONFIG } from '../../../config/nodeConfigs';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+//import "./AgentNode.css";
 
-// Returns the gravatar URL for a given jid string (e.g., "name@host")
-function buildAvatarUrl(jid) {
+// Utility function
+const buildAvatarUrl = (jid) => {
   const digest = md5(jid.trim().toLowerCase());
   return `http://www.gravatar.com/avatar/${digest}?d=monsterid`;
-}
+};
 
-export default function AgentNode({ data, selected, id}) {
-  const [modalOpen, setModalOpen] = useState(false);
+const AgentNode = ({ data, selected, id }) => {
+  // Custom hook for modal data management
+  const modalData = useModalData(data, AGENT_CONFIG.requiredFields);
 
-  // Handler to update the node's data via ReactFlow's onNodesChange
-  const handleChange = (field, value) => {
+  // Handle save changes
+  const handleSaveChanges = (tempData) => {
     if (data.onChange) {
-      data.onChange(id, field, value);
+      Object.keys(tempData).forEach(field => {
+        data.onChange(id, field, tempData[field]);
+      });
     }
   };
 
-  // Notify App about modal state changes
-  useEffect(() => {
+  // Handle modal state changes
+  const handleModalStateChange = (isOpen) => {
     if (data.onModalStateChange) {
-      data.onModalStateChange(modalOpen);
-    }
-  }, [modalOpen, data.onModalStateChange]);
-
-  // Autocorrect class name on blur
-  const handleClassBlur = (event) => {
-    const value = event.target.value;
-    // Only autocorrect if there are spaces
-    if (value.includes(' ')) {
-      const camel = toCamelCase(value);
-      handleChange('class', camel);
+      data.onModalStateChange(isOpen);
     }
   };
+
+  // Handle double click
+  const handleDoubleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    modalData.openModal();
+    handleModalStateChange(true);
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    modalData.closeModal();
+    handleModalStateChange(false);
+  };
+
+  // Handle save
+  const handleSave = () => {
+    const saved = modalData.saveChanges(handleSaveChanges);
+    if (saved) {
+      handleModalStateChange(false);
+    }
+  };
+
+  // Memoized attributes for display
+  const attributes = useMemo(() => [
+    { label: "Class", value: data.class || 'Not set' },
+    { label: "Name", value: data.name || 'Not set' },
+    { label: "Host", value: data.host || 'Not set' },
+    { label: "Port", value: data.port || 5222 },
+    { label: "Verify Security", value: data.verify_security === true ? 'Enabled' : 'Disabled' }
+  ], [data]);
+
+  // Check if valid
+  const isValid = Object.keys(modalData.errors).length === 0;
 
   return (
-    <div className={`agent-node${selected ? ' agent-node-selected' : ''}`}>
-      {/* Use dynamic title from data.title or default to "Agent" */}
-      <NodeHeader image={agentSVG} title={data.title || "Agent"} />
-      
-      <NodeDivider title="inputs"/>
-      {/* Input Handles */}
-      <LabeledHandle
-        type="target"
-        position={Position.Left}
-        id="friendship-target"
-        isConnectable={true}
-        title="friendship (target)"
-      />      
-      <LabeledHandle
-        type="target"
-        position={Position.Left}
-        id="inheritance-target"
-        isConnectable={true}
-        title="inherits from"
-      />
-      
-      <NodeDivider title="attributes"/>
-      
-      {/* Simplified attributes section with single button */}
-      <div className="agent-node-attributes">
-        <button 
-          className="agent-setup-btn" 
-          onClick={() => setModalOpen(true)}
-          disabled={modalOpen}
+    <>
+      <BaseNode
+        selected={selected}
+        onDoubleClick={handleDoubleClick}
+        icon={AGENT_CONFIG.icon}
+        title={data.title || AGENT_CONFIG.title}
+        attributes={attributes}
+        handles={AGENT_CONFIG.handles}
+        className="agent-node"
+      >
+        <NodeConfigurationModal
+          open={modalData.modalOpen}
+          title={modalData.getCurrentValue('title') || AGENT_CONFIG.title}
+          subtitle={AGENT_CONFIG.subtitle}
+          onClose={handleModalClose}
+          onSave={handleSave}
+          onTitleChange={(newTitle) => modalData.handleTempChange('title', newTitle)}
+          errors={modalData.errors}
+          isValid={isValid}
         >
-          Configure
-        </button>
+          <TextFormField
+            label="Class Name"
+            value={modalData.getCurrentValue('class')}
+            onChange={(value) => modalData.handleTempChange('class', value)}
+            onBlur={() => modalData.handleBlur('class')}
+            placeholder="Python class name (e.g., MyAgent)"
+            required
+            error={modalData.hasError('class')}
+            helperText={modalData.getErrorMessage('class', "The Python class name for this agent")}
+          />
 
-        {/* NodeSetupModal with all the inputs */}
-        <ConfigurationModal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title={data.title || "Agent"}
-          onTitleChange={(newTitle) => handleChange('title', newTitle)} // Add title change handler
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                Agent Configuration
-              </label>
-              <p style={{ color: '#666', marginBottom: '20px' }}>
-                Configure the basic settings for your agent.
-              </p>
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-                Class Name:
-              </label>
-              <input 
-                type="text"
-                value={data.class || ''} 
-                onChange={(e) => handleChange('class', e.target.value)}
-                onBlur={handleClassBlur}
-                placeholder="Python class name (e.g., MyAgent)"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <small style={{ color: '#888', fontSize: '12px' }}>
-                The Python class name for this agent
-              </small>
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-                Agent Name:
-              </label>
-              <input 
-                type="text"
-                value={data.name || ''} 
-                onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="Agent instance name (e.g., agent1)"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <small style={{ color: '#888', fontSize: '12px' }}>
-                The unique name for this agent instance
-              </small>
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
-                Host:
-              </label>
-              <input 
-                type="text"
-                value={data.host || ''} 
-                onChange={(e) => handleChange('host', e.target.value)}
-                placeholder="localhost"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <small style={{ color: '#888', fontSize: '12px' }}>
-                The host where this agent will run
-              </small>
-            </div>
-            
-            {/* Display current JID */}
-            {data.name && data.host && (
-              <div style={{ 
-                padding: '16px', 
-                background: '#f8f9fa', 
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div>
-                    <strong style={{ fontSize: '14px' }}>Agent JID:</strong>
-                    <div style={{ fontSize: '16px', fontFamily: 'monospace', color: '#007bff' }}>
-                      {data.name}@{data.host}
-                    </div>
-                  </div>
-                  <img 
-                    src={buildAvatarUrl(`${data.name}@{data.host}`)}
-                    alt="Agent Avatar"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      border: '2px solid #ddd'
+          <TextFormField
+            label="Agent Name"
+            value={modalData.getCurrentValue('name')}
+            onChange={(value) => modalData.handleTempChange('name', value)}
+            onBlur={() => modalData.handleBlur('name')}
+            placeholder="Agent instance name (e.g., agent1)"
+            required
+            error={modalData.hasError('name')}
+            helperText={modalData.getErrorMessage('name', "The unique name for this agent instance")}
+          />
+
+          <TextFormField
+            label="Host"
+            value={modalData.getCurrentValue('host')}
+            onChange={(value) => modalData.handleTempChange('host', value)}
+            onBlur={() => modalData.handleBlur('host')}
+            placeholder="localhost"
+            required
+            error={modalData.hasError('host')}
+            helperText={modalData.getErrorMessage('host', "The host where this agent will run")}
+          />
+
+          <TextFormField
+            label="Password"
+            value={modalData.getCurrentValue('password')}
+            onChange={(value) => modalData.handleTempChange('password', value)}
+            onBlur={() => modalData.handleBlur('password')}
+            placeholder="password"
+            type="password"
+            required
+            error={modalData.hasError('password')}
+            helperText={modalData.getErrorMessage('password', "The password for this agent")}
+          />
+
+          <NumberFormField
+            label="Port"
+            value={modalData.getCurrentValue('port')}
+            onChange={(value) => modalData.handleTempChange('port', value)}
+            placeholder="5222"
+            helperText="The port number where this agent will run"
+          />
+
+          <SwitchFormField
+            label="Verify Security"
+            checked={modalData.getCurrentValue('verify_security')}
+            onChange={(checked) => modalData.handleTempChange('verify_security', checked)}
+          />
+
+          {/* JID Preview */}
+          {modalData.getCurrentValue('name') && modalData.getCurrentValue('host') && (
+            <Card variant="outlined" sx={{ mt: 2 }}>
+              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    Agent JID Preview:
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontFamily: 'monospace',
+                      color: 'primary.main',
+                      fontSize: '16px'
                     }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </ConfigurationModal>
-      </div>
-      
-      <NodeDivider title="outputs"/>
-      
-      {/* Output Handles */}
-      <LabeledHandle
-        type="source"
-        position={Position.Right}
-        id="friendship-source"
-        title="friendship (source)"
-      />
-      <LabeledHandle
-        type="source"
-        position={Position.Right}
-        id="behaviour"
-        isConnectable={true}
-        title="behaviour"
-      />
-      <LabeledHandle
-        type="source"
-        position={Position.Right}
-        id="inheritance-source"
-        isConnectable={true}
-        title="inherited by"
-      />
-    </div>
+                  >
+                    {modalData.getCurrentValue('name')}@{modalData.getCurrentValue('host')}
+                  </Typography>
+                </Box>
+                <Avatar
+                  src={buildAvatarUrl(`${modalData.getCurrentValue('name')}@${modalData.getCurrentValue('host')}`)}
+                  alt="Agent Avatar"
+                  sx={{ width: 40, height: 40 }}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </NodeConfigurationModal>
+      </BaseNode>
+    </>
   );
-}
+};
+
+export default AgentNode;

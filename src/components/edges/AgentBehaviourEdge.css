@@ -6,7 +6,7 @@
 }
 
 .agent-behaviour-edge-selected {
-  stroke: #ff9800 !important;
+  stroke: var(--primary-color) !important;
 }
 
 .agent-behaviour-edge-label {

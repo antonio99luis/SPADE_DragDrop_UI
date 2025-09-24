@@ -21,11 +21,11 @@
 
 .sticky-note-node-selected {
   box-shadow: 0 0 0 1px #f2be6f;
-  border: 2px solid #ff9800;
+  border: 2px solid var(--primary-color);
 }
 
 .sticky-note-node:hover {
-  border: 2px solid #ff9800;
+  border: 2px solid var(--primary-color);
 }
 
 .sticky-note-textarea {

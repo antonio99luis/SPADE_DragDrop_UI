@@ -4,11 +4,12 @@ import agentSVG from "../../assets/nodeSVG/agent.svg";
 import behaviourSVG from "../../assets/nodeSVG/behaviour.svg";
 import templateSVG from "../../assets/nodeSVG/template.svg";
 import messageSVG from "../../assets/nodeSVG/message.svg";
-import guardrailSVG from "../../assets/nodeSVG/guardrail.svg";
-import providerSVG from "../../assets/nodeSVG/provider.svg";
-import routingSVG from "../../assets/nodeSVG/routing.svg";
-import toolSVG from "../../assets/nodeSVG/tool.svg";
 import stickySVG from "../../assets/nodeSVG/stickynote.svg";
+import Fab from "@mui/material/Fab";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove"; // Import the minus icon
+import TextField from "@mui/material/TextField";
+
 import "./NodeToolbar.css";
 
 const SPADE_NODES = [
@@ -18,19 +19,12 @@ const SPADE_NODES = [
   { type: "message", label: "Message", image: messageSVG },
 ];
 
-const PLACEHOLDER_NODES = [
-  { type: "guardrail", label: "Guardrail", image: guardrailSVG },
-  { type: "provider", label: "Provider", image: providerSVG },
-  { type: "routing", label: "Routing", image: routingSVG },
-  { type: "tool", label: "Tool", image: toolSVG },
-];
-
-export default function NodeToolbar({ 
-  onDragStart, 
-  onGenerateSpade, 
-  onSave, 
+export default function NodeToolbar({
+  onDragStart,
+  onGenerateSpade,
+  onSave,
   onLoad,
-  modalBlocked = false 
+  modalBlocked = false
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -63,26 +57,28 @@ export default function NodeToolbar({
 
   return (
     <div className="dropdown-node-menu-container">
-      <button
-        className={`dropdown-node-menu-btn${modalBlocked ? ' disabled' : ''}`}
+      <Fab
+        color="primary"
+        aria-label={open ? "close" : "add"}
         onClick={handleButtonClick}
-        title={modalBlocked ? "Close modal first" : "Add Node"}
         disabled={modalBlocked}
+        title={modalBlocked ? "Close modal first" : "Add Node"}
       >
-        +
-      </button>
+        {open ? <RemoveIcon /> : <AddIcon />}
+      </Fab>
       {open && (
         <div className="dropdown-node-menu" ref={menuRef}>
           <div className="dropdown-node-menu-header">
             <div className="dropdown-node-menu-title">Add Nodes</div>
-            <input
+            <TextField
               className="dropdown-node-menu-search"
-              placeholder="Search nodes..."
+              label="Search nodes"
+              size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          
+
           <div className="dropdown-node-menu-content">
             <div className="dropdown-node-menu-section">
               <div className="dropdown-node-menu-section-title">SPADE nodes</div>
@@ -99,13 +95,13 @@ export default function NodeToolbar({
                   <BaseNode image={node.image} title={node.label} />
                 </div>
               ))}
-                <div
-                  key={"stickyNote"}
-                  className="dropdown-node-menu-draggable-sticky"
-                  draggable
-                  onDragStart={(e) => onDragStart(e, "stickyNote")}
-                >
-                  <BaseNode image={stickySVG} title={"Sticky Note"} />            
+              <div
+                key={"stickyNote"}
+                className="dropdown-node-menu-draggable-sticky"
+                draggable
+                onDragStart={(e) => onDragStart(e, "stickyNote")}
+              >
+                <BaseNode image={stickySVG} title={"Sticky Note"} />
               </div>
             </div>
             <div className="dropdown-node-menu-buttons">
@@ -120,18 +116,6 @@ export default function NodeToolbar({
               </button>
             </div>
             <div className="dropdown-node-menu-section">
-              <div className="dropdown-node-menu-section-title">SPADE LLM nodes</div>
-              <div className="dropdown-node-menu-empty">PLACEHOLDERS
-              {filterNodes(PLACEHOLDER_NODES).map((node) => (
-                <div
-                  key={node.type}
-                  className="dropdown-node-menu-draggable"
-                >
-                  <BaseNode image={node.image} title={node.label} />
-                </div>
-              ))}
-
-              </div>
             </div>
           </div>
         </div>

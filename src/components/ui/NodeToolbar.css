@@ -8,7 +8,7 @@
 .dropdown-node-menu-btn {
   width: 44px;
   border-radius: 50%;
-  background: #ff9800;
+  background: var(--primary-color);
   color: #fff;
   font-size: 2em;
   border: 0;
@@ -109,7 +109,7 @@
 }
 
 .dropdown-node-menu-draggable-sticky .base-node:hover {
-  border-color: #ff9800;
+  border-color: var(--primary-color);
 }
 
 .dropdown-node-menu-draggable-sticky .base-node-img {
@@ -131,7 +131,7 @@
   position: relative;
   margin: 24px auto 0 auto;
   padding: 10px 20px;
-  background: #ff9800;
+  background: var(--primary-color);
   color: #fff;
   border: none;
   border-radius: 5px;

@@ -1,248 +1,199 @@
-import React, { useState } from 'react';
-import { Handle, Position } from '@xyflow/react';
-import BaseNode from '../shared/NodeBase';
-import behaviourSVG from '../../../assets/nodeSVG/behaviour.svg';
+// src/components/nodes/behaviour/BehaviourNode.jsx
+import React, { useMemo } from 'react';
+import BaseNode from '../BaseNode';
+import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
+import CodeConfigurationModal from '../../modals/CodeConfigurationModal';
+import { TextFormField, SelectFormField } from '../../forms/FormField';
+import { useBehaviourModalData } from '../../../hooks/useBehaviourModalData';
+import { BEHAVIOUR_CONFIG, BEHAVIOUR_TYPES } from '../../../config/nodeConfigs';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
 import './BehaviourNode.css';
-import PeriodicBehaviourFields from './fields/PeriodicBehaviourFields';
-import TimeoutBehaviourFields from './fields/TimeoutBehaviourFields';
-import BehaviourConfigModal from '../../modals/BehaviourConfigModal';
-import NodeHeader from '../shared/NodeHeader';
-import NodeDivider from '../shared/NodeDivider';
-import { LabeledHandle } from '../shared/LabeledHandle';
 
-const behaviourTypes = [
-  'CyclicBehaviour',
-  'OneShotBehaviour',
-  'TimeoutBehaviour',
-  'PeriodicBehaviour',
-];
+const BehaviourNode = ({ data, selected, id }) => {
+  // Custom hook for modal data management with behaviour-specific logic
+  const modalData = useBehaviourModalData(data, BEHAVIOUR_CONFIG.requiredFields);
 
-const DEFAULT_CONFIG_CODE = {
-  CyclicBehaviour: `class MyCyclicBehaviour(CyclicBehaviour):
-    async def run(self):
-        # Write your cyclic behaviour code here
-        pass
-`,
-  OneShotBehaviour: `class MyOneShotBehaviour(OneShotBehaviour):
-    async def run(self):
-        # Write your one-shot behaviour code here
-        pass
-`,
-  TimeoutBehaviour: `class MyTimeoutBehaviour(TimeoutBehaviour):
-    async def run(self):
-        # Write your timeout behaviour code here
-        pass
-`,
-  PeriodicBehaviour: `class MyPeriodicBehaviour(PeriodicBehaviour):
-    async def run(self):
-        # Write your periodic behaviour code here
-        pass
-`,
-};
-
-// Helper to generate default code using the class field or fallback
-const getDefaultConfigCode = (behaviourType, className) => {
-  const template = DEFAULT_CONFIG_CODE[behaviourType];
-  if (className && className.trim()) {
-    // Replace the default class name (e.g., MyCyclicBehaviour) with the user input
-    return template.replace(
-      new RegExp(`class My${behaviourType}`),
-      `class ${className.trim()}`
-    );
-  }
-  // If className is empty, return the default template as is
-  return template;
-};
-
-// Helper to autocorrect class names to CamelCase
-function toCamelCase(str) {
-  return str
-    .split(' ')
-    .filter(Boolean)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('');
-}
-
-export default function BehaviourNode({ data, selected, id, x, y }) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [codeByType, setCodeByType] = useState(() => {
-    const initial = {};
-    behaviourTypes.forEach(type => {
-      initial[type] =
-        (data.configCode && data.configCode[type]) ||
-        getDefaultConfigCode(type, data.class);
-    });
-    return initial;
-  });
-
-  // When type or class changes, keep code for all types in memory
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    if (name === 'class' && !modalOpen) {
-      if (data.onChange) {
-        data.onChange(id, 'class', value);
-      }
-      // Update code preview for the current type
-      setCodeByType(prev => ({
-        ...prev,
-        [data.type]: getDefaultConfigCode(data.type, value),
-      }));
-      return;
-    }
-    const newType = value;
+  // Handle save changes
+  const handleSaveChanges = (tempData) => {
     if (data.onChange) {
-      let cleanedFields = {};
-      if (newType === 'CyclicBehaviour' || newType === 'OneShotBehaviour') {
-        cleanedFields = {};
-      } else if (newType === 'TimeoutBehaviour') {
-        cleanedFields = { start_at: '' };
-      } else if (newType === 'PeriodicBehaviour') {
-        cleanedFields = { period: '', start_at: '' };
-      }
-      data.onChange(id, 'type', newType);
-      Object.entries(cleanedFields).forEach(([field, val]) => {
-        data.onChange(id, field, val);
+      Object.keys(tempData).forEach(field => {
+        data.onChange(id, field, tempData[field]);
       });
-      if (newType !== 'PeriodicBehaviour' && data.period !== undefined) {
-        data.onChange(id, 'period', undefined);
-      }
-      if (
-        (newType === 'CyclicBehaviour' || newType === 'OneShotBehaviour') &&
-        data.start_at !== undefined
-      ) {
-        data.onChange(id, 'start_at', undefined);
-      }
-      // Save codeByType to node data
-      data.onChange(id, 'configCode', codeByType);
     }
   };
 
-  // Open modal with code for current type and class
-  const openModal = () => {
-    setTempCode(
-      codeByType[data.type] ||
-        getDefaultConfigCode(data.type, data.class)
-    );
-    setModalOpen(true);
+  // Handle modal state changes
+  const handleModalStateChange = (isOpen) => {
+    if (data.onModalStateChange) {
+      data.onModalStateChange(isOpen);
+    }
   };
 
-  // Save code for current type and persist to node data
+  // Handle double click
+  const handleDoubleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    modalData.openModal();
+    handleModalStateChange(true);
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    modalData.closeModal();
+    handleModalStateChange(false);
+  };
+
+  // Handle save
   const handleSave = () => {
-    const updated = { ...codeByType, [data.type]: tempCode };
-    setCodeByType(updated);
-    if (data.onChange) {
-      data.onChange(id, 'configCode', updated);
-    }
-    setModalOpen(false);
-  };
-
-  // Temp code for the modal editor
-  const [tempCode, setTempCode] = useState(codeByType[data.type] || getDefaultConfigCode(data.type, data.class));
-  React.useEffect(() => {
-    if (modalOpen) setTempCode(codeByType[data.type] || getDefaultConfigCode(data.type, data.class));
-  }, [modalOpen, data.type, data.class, codeByType]);
-
-  const handleReset = () => {
-    const updated = { ...codeByType, [data.type]: getDefaultConfigCode(data.type, data.class) };
-    setCodeByType(updated);
-    setTempCode(getDefaultConfigCode(data.type, data.class));
-    if (data.onChange) {
-      // Remove user code for this type from memory
-      const cleaned = { ...codeByType, [data.type]: undefined };
-      data.onChange(id, 'configCode', cleaned);
+    const saved = modalData.saveChanges(handleSaveChanges);
+    if (saved) {
+      handleModalStateChange(false);
     }
   };
 
-  // Autocorrect class name on blur
-  const handleClassBlur = (event) => {
-    const value = event.target.value;
-    // Only autocorrect if there are spaces
-    if (value.includes(' ')) {
-      const camel = toCamelCase(value);
+  // Handle code save
+  const handleCodeSave = () => {
+    modalData.saveCode((field, value) => {
       if (data.onChange) {
-        data.onChange(id, 'class', camel);
+        data.onChange(id, field, value);
       }
-      setCodeByType(prev => ({
-        ...prev,
-        [data.type]: getDefaultConfigCode(data.type, camel),
-      }));
-    }
+    });
   };
+
+  // Handle code reset
+  const handleCodeReset = () => {
+    modalData.resetCode((field, value) => {
+      if (data.onChange) {
+        data.onChange(id, field, value);
+      }
+    });
+  };
+
+  // Memoized attributes for display
+  const attributes = useMemo(() => {
+    const baseAttrs = [
+      { label: "Class", value: data.class || 'Not set' },
+      { label: "Type", value: data.type || 'Not set' },
+    ];
+
+    // Add type-specific attributes
+    if (data.type === 'PeriodicBehaviour') {
+      baseAttrs.push({ label: "Period", value: data.period || 'Not set' });
+      baseAttrs.push({ label: "Start At", value: data.start_at || 'Not set' });
+    } else if (data.type === 'TimeoutBehaviour') {
+      baseAttrs.push({ label: "Start At", value: data.start_at || 'Not set' });
+    }
+
+    return baseAttrs;
+  }, [data]);
+
+  // Check if valid
+  const isValid = Object.keys(modalData.errors).length === 0;
+
+  // Get current behaviour type for conditional rendering
+  const currentType = modalData.getCurrentValue('type');
 
   return (
-    <div className={`behaviour-node${selected ? ' behaviour-node-selected' : ''}`}>
-      <NodeHeader image={behaviourSVG} title="Behaviour" > </NodeHeader>
-      <NodeDivider title="inputs"/>
-      {/* Input Handles */}
-      <LabeledHandle
-        type="target"
-        position={Position.Left}
-        id="behaviour"
-        isConnectable={true}
-        title="used by agent"
-      />
-      <NodeDivider title="attributes"/>
-      {/* Behaviour-specific content here */}
-      <div className="behaviour-node-attributes">
-        <div>
-          Class:{' '}
-          <input
-            className="behaviour-node-input"
-            type="text"
-            value={data.class || ''}
-            onChange={e => data.onChange(id, 'class', e.target.value)}
-          />
-        </div>
-        <div>
-          Type:{' '}
-          <select
-            className="behaviour-node-input"
-            value={data.type}
-            name="type"
-            onChange={handleChange}
-            disabled={modalOpen}
-          >
-            {behaviourTypes.map((type) => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-        {data.type === 'PeriodicBehaviour' && (
-          <PeriodicBehaviourFields 
-            data={data} 
-            id={id} 
-            onChange={data.onChange}
-            disabled={modalOpen} 
-          />
-        )}
-        {data.type === 'TimeoutBehaviour' && (
-          <TimeoutBehaviourFields 
-            data={data} 
-            id={id} 
-            onChange={data.onChange}
-            disabled={modalOpen}
-          />
-        )}
-        <button className="behaviour-config-btn" onClick={openModal}>Configure</button>
-        <BehaviourConfigModal
-          open={modalOpen}
-          code={tempCode}
-          onChange={setTempCode}
+    <>
+      <BaseNode
+        selected={selected}
+        onDoubleClick={handleDoubleClick}
+        icon={BEHAVIOUR_CONFIG.icon}
+        title={data.title || BEHAVIOUR_CONFIG.title}
+        attributes={attributes}
+        handles={BEHAVIOUR_CONFIG.handles}
+        className="behaviour-node"
+      >
+        <NodeConfigurationModal
+          open={modalData.modalOpen}
+          title={modalData.getCurrentValue('title') || BEHAVIOUR_CONFIG.title}
+          subtitle={BEHAVIOUR_CONFIG.subtitle}
+          onClose={handleModalClose}
           onSave={handleSave}
-          onCancel={() => setModalOpen(false)}
-          position={{ x, y }}
-          onReset={handleReset}
+          onTitleChange={(newTitle) => modalData.handleTempChange('title', newTitle)}
+          errors={modalData.errors}
+          isValid={isValid}
+        >
+          <TextFormField
+            label="Class Name"
+            value={modalData.getCurrentValue('class')}
+            onChange={(value) => modalData.handleTempChange('class', value)}
+            onBlur={() => modalData.handleClassBlur('class')}
+            placeholder="Python class name (e.g., MyBehaviour)"
+            required
+            error={modalData.hasError('class')}
+            helperText={modalData.getErrorMessage('class', "The Python class name for this behaviour")}
+          />
+
+          <SelectFormField
+            label="Behaviour Type"
+            value={modalData.getCurrentValue('type')}
+            onChange={(value) => modalData.handleTempChange('type', value)}
+            onBlur={() => modalData.handleBlur('type')}
+            options={BEHAVIOUR_TYPES}
+            required
+            error={modalData.hasError('type')}
+            helperText={modalData.getErrorMessage('type', "The type of behaviour (Cyclic, OneShot, etc.)")}
+          />
+
+          {/* Conditional fields based on behaviour type */}
+          {currentType === 'PeriodicBehaviour' && (
+            <>
+              <TextFormField
+                label="Period (seconds)"
+                value={modalData.getCurrentValue('period')}
+                onChange={(value) => modalData.handleTempChange('period', value)}
+                placeholder="e.g., 5.0"
+                helperText="How often the behaviour should run (in seconds)"
+              />
+
+              <TextFormField
+                label="Start At"
+                value={modalData.getCurrentValue('start_at')}
+                onChange={(value) => modalData.handleTempChange('start_at', value)}
+                placeholder="e.g., 2024-01-01 12:00:00"
+                helperText="When the behaviour should start (optional)"
+              />
+            </>
+          )}
+
+          {currentType === 'TimeoutBehaviour' && (
+            <TextFormField
+              label="Start At"
+              value={modalData.getCurrentValue('start_at')}
+              onChange={(value) => modalData.handleTempChange('start_at', value)}
+              placeholder="e.g., 2024-01-01 12:00:00"
+              helperText="When the behaviour should start (optional)"
+            />
+          )}
+
+          {/* Configure Code Button */}
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={modalData.openCodeModal}
+              fullWidth
+              sx={{ mb: 1 }}
+            >
+              Configure Behaviour Code
+            </Button>
+          </Box>
+        </NodeConfigurationModal>
+
+        {/* Code Configuration Modal */}
+        <CodeConfigurationModal
+          open={modalData.codeModalOpen}
+          code={modalData.tempCode}
+          onChange={modalData.setTempCode}
+          onSave={handleCodeSave}
+          onCancel={modalData.closeCodeModal}
+          onReset={handleCodeReset}
+          title={`Configure ${currentType} Code`}
         />
-      </div>
-      <NodeDivider title="outputs"/>
-      {/* Source Handles */}
-      <LabeledHandle
-        type="source"
-        position={Position.Right}
-        id="template"
-        isConnectable={true}
-        title="uses template"
-      />
-    </div>
+      </BaseNode>
+    </>
   );
-}
+};
+
+export default BehaviourNode;

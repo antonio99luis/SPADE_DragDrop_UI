@@ -6,6 +6,8 @@
  */
 
 export const generateSpadeCode = (nodes, edges) => {
+    console.log("Generating code with nodes:", nodes);
+    console.log("and edges:", edges);
     // Base template
     const baseTemplate =  `# SPADE Base Template\n\n`+
                           `from spade.agent import Agent\n\n`+
@@ -180,8 +182,11 @@ export const generateSpadeCode = (nodes, edges) => {
     const agentInstances = agents.map((a) => {
       const auxClass = a.data.class || "MyAgent";
       const agentName = a.data.name || "Agent";
+      const agentPassword = a.data.password || "password";
+      const port = a.data.port ? parseInt(a.data.port, 10) : 5222;
+      const verify_security = a.data.verify_security ? "True" : "False";
       const jid = getAgentJid(a);
-      return `    ${agentName.toLowerCase()} = ${auxClass}('${jid}', 'password')`;
+      return `    ${agentName.toLowerCase()} = ${auxClass}('${jid}', '${agentPassword}', ${port}, ${verify_security})\n`;
     });
     const agentStarts = agents.map((a) => {
       const agentName = a.data.name || "Agent";
