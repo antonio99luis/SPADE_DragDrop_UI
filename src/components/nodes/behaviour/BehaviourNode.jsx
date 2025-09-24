@@ -3,7 +3,12 @@ import React, { useMemo } from 'react';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
 import CodeConfigurationModal from '../../modals/CodeConfigurationModal';
-import { TextFormField, SelectFormField } from '../../forms/FormField';
+import { 
+  TextFormField, 
+  SelectFormField, 
+  FloatFormField, 
+  DateTimeFormField 
+} from '../../forms/FormField';
 import { useBehaviourModalData } from '../../../hooks/useBehaviourModalData';
 import { BEHAVIOUR_CONFIG, BEHAVIOUR_TYPES } from '../../../config/nodeConfigs';
 import Button from '@mui/material/Button';
@@ -70,6 +75,24 @@ const BehaviourNode = ({ data, selected, id }) => {
     });
   };
 
+  // Helper to format date for display
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return 'Not set';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString();
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+
+  // Helper to format period for display
+  const formatPeriodForDisplay = (period) => {
+    if (!period) return 'Not set';
+    const num = parseFloat(period);
+    return isNaN(num) ? 'Invalid' : `${num}s`;
+  };
+
   // Memoized attributes for display
   const attributes = useMemo(() => {
     const baseAttrs = [
@@ -79,10 +102,19 @@ const BehaviourNode = ({ data, selected, id }) => {
 
     // Add type-specific attributes
     if (data.type === 'PeriodicBehaviour') {
-      baseAttrs.push({ label: "Period", value: data.period || 'Not set' });
-      baseAttrs.push({ label: "Start At", value: data.start_at || 'Not set' });
+      baseAttrs.push({ 
+        label: "Period", 
+        value: formatPeriodForDisplay(data.period)
+      });
+      baseAttrs.push({ 
+        label: "Start At", 
+        value: formatDateForDisplay(data.start_at)
+      });
     } else if (data.type === 'TimeoutBehaviour') {
-      baseAttrs.push({ label: "Start At", value: data.start_at || 'Not set' });
+      baseAttrs.push({ 
+        label: "Start At", 
+        value: formatDateForDisplay(data.start_at)
+      });
     }
 
     return baseAttrs;
@@ -140,31 +172,36 @@ const BehaviourNode = ({ data, selected, id }) => {
           {/* Conditional fields based on behaviour type */}
           {currentType === 'PeriodicBehaviour' && (
             <>
-              <TextFormField
+              <FloatFormField
                 label="Period (seconds)"
                 value={modalData.getCurrentValue('period')}
                 onChange={(value) => modalData.handleTempChange('period', value)}
+                onBlur={() => modalData.handleBlur('period')}
                 placeholder="e.g., 5.0"
                 helperText="How often the behaviour should run (in seconds)"
+                min={0.1}
+                step={0.1}
               />
 
-              <TextFormField
+              <DateTimeFormField
                 label="Start At"
                 value={modalData.getCurrentValue('start_at')}
                 onChange={(value) => modalData.handleTempChange('start_at', value)}
-                placeholder="e.g., 2024-01-01 12:00:00"
+                onBlur={() => modalData.handleBlur('start_at')}
                 helperText="When the behaviour should start (optional)"
+                placeholder="Select date and time"
               />
             </>
           )}
 
           {currentType === 'TimeoutBehaviour' && (
-            <TextFormField
+            <DateTimeFormField
               label="Start At"
               value={modalData.getCurrentValue('start_at')}
               onChange={(value) => modalData.handleTempChange('start_at', value)}
-              placeholder="e.g., 2024-01-01 12:00:00"
+              onBlur={() => modalData.handleBlur('start_at')}
               helperText="When the behaviour should start (optional)"
+              placeholder="Select date and time"
             />
           )}
 

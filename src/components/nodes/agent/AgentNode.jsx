@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import md5 from 'blueimp-md5';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
-import { TextFormField, NumberFormField, SwitchFormField } from '../../forms/FormField';
+import { TextFormField, NumberFormField, SwitchFormField,PasswordFormField } from '../../forms/FormField';
 import { useModalData } from '../../../hooks/useModalData';
 import { AGENT_CONFIG } from '../../../config/nodeConfigs';
 import Card from '@mui/material/Card';
@@ -11,7 +11,7 @@ import CardContent from '@mui/material/CardContent';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-//import "./AgentNode.css";
+import "./AgentNode.css";
 
 // Utility function
 const buildAvatarUrl = (jid) => {
@@ -127,7 +127,7 @@ const AgentNode = ({ data, selected, id }) => {
             helperText={modalData.getErrorMessage('host', "The host where this agent will run")}
           />
 
-          <TextFormField
+          <PasswordFormField
             label="Password"
             value={modalData.getCurrentValue('password')}
             onChange={(value) => modalData.handleTempChange('password', value)}

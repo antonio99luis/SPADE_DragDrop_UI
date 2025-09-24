@@ -27,3 +27,22 @@
     background-color: #f9f9f9;
   }
 }
+
+/* DatePicker z-index overrides */
+.MuiPickersPopper-root,
+.MuiPickersLayout-root,
+.MuiDialog-root,
+.MuiModal-root {
+  z-index: 9999 !important;
+}
+
+/* Específico para Material-UI X DatePicker */
+div[role="presentation"] {
+  z-index: 9999 !important;
+}
+
+.MuiPickersDay-root,
+.MuiDateCalendar-root,
+.MuiTimeClock-root {
+  z-index: inherit !important;
+}

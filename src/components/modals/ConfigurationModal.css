@@ -136,3 +136,24 @@
   overflow-y: auto;
   flex: 1;
 }
+
+.MuiPickersPopper-root {
+  z-index: 9999 !important;
+}
+
+.MuiDialog-root .MuiPaper-root {
+  z-index: 9999 !important;
+}
+
+.MuiPickersLayout-root {
+  z-index: 9999 !important;
+}
+
+/* Para Material-UI v6+ */
+.MuiDateCalendar-root {
+  z-index: 9999 !important;
+}
+
+.MuiPickersDay-root {
+  z-index: 9999 !important;
+}
