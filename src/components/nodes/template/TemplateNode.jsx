@@ -120,10 +120,9 @@ const TemplateNode = ({ data, selected, id }) => {
             label="Sender"
             value={modalData.getCurrentValue('sender')}
             onChange={(value) => modalData.handleTempChange('sender', value)}
-            onBlur={() => modalData.handleBlur('sender')}
+            //onBlur={() => modalData.handleBlur('sender')}
             placeholder="sender@example.com"
-            required
-            error={modalData.hasError('sender')}
+            //error={modalData.hasError('sender')}
             helperText={modalData.getErrorMessage('sender', "The sender of the message")}
           />
 
@@ -131,10 +130,9 @@ const TemplateNode = ({ data, selected, id }) => {
             label="To"
             value={modalData.getCurrentValue('to')}
             onChange={(value) => modalData.handleTempChange('to', value)}
-            onBlur={() => modalData.handleBlur('to')}
+            //onBlur={() => modalData.handleBlur('to')}
             placeholder="recipient@example.com"
-            required
-            error={modalData.hasError('to')}
+            //error={modalData.hasError('to')}
             helperText={modalData.getErrorMessage('to', "The recipient of the message")}
           />
 
@@ -142,10 +140,9 @@ const TemplateNode = ({ data, selected, id }) => {
             label="Body"
             value={modalData.getCurrentValue('body')}
             onChange={(value) => modalData.handleTempChange('body', value)}
-            onBlur={() => modalData.handleBlur('body')}
+            //onBlur={() => modalData.handleBlur('body')}
             placeholder="Message content..."
-            required
-            error={modalData.hasError('body')}
+            //error={modalData.hasError('body')}
             helperText={modalData.getErrorMessage('body', "The main content of the message")}
             rows={4}
           />
