@@ -13,6 +13,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --primary-color: #ff9800;
+  --secondary-color: #F26B38;
+
 }
 
 @media (prefers-color-scheme: light) {

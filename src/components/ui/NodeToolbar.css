@@ -29,7 +29,7 @@
 
 
 .dropdown-node-menu-btn:hover {
-  background: #fb8c00;
+  background: var(--primary-color);
 }
 
 .dropdown-node-menu {
@@ -141,7 +141,7 @@
   transition: background 0.2s;
 }
 .generate-spade-btn:hover {
-  background: #fb8c00;
+  background: var(--secondary-color);
 }
 
 
