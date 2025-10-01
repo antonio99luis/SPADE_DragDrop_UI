@@ -8,10 +8,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000; /* Higher than existing modals */
+  z-index: 2; /* Higher than existing modals */
   padding: 20px;
 }
+.monaco-editor .suggest-widget{
+    z-index: 10000 !important; /* Higher than existing modals */
 
+}
 .node-setup-modal-content {
   background: #fff;
   border-radius: 8px;

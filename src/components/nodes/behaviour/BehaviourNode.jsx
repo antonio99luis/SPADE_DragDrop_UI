@@ -3,11 +3,11 @@ import React, { useMemo } from 'react';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
 import CodeConfigurationModal from '../../modals/CodeConfigurationModal';
-import { 
-  TextFormField, 
-  SelectFormField, 
-  FloatFormField, 
-  DateTimeFormField 
+import {
+  TextFormField,
+  SelectFormField,
+  FloatFormField,
+  DateTimeFormField
 } from '../../forms/FormField';
 import { useBehaviourModalData } from '../../../hooks/useBehaviourModalData';
 import { BEHAVIOUR_CONFIG, BEHAVIOUR_TYPES } from '../../../config/nodeConfigs';
@@ -18,7 +18,12 @@ import './BehaviourNode.css';
 const BehaviourNode = ({ data, selected, id }) => {
   // Custom hook for modal data management with behaviour-specific logic
   const modalData = useBehaviourModalData(data, BEHAVIOUR_CONFIG.requiredFields);
-
+  const [codeModalOpen, setCodeModalOpen] = React.useState(false);
+  const [connectedNodes, setConnectedNodes] = React.useState([]);
+  const [tempConfigCode, setTempConfigCode] = React.useState({});
+  const [agentData, setAgentData] = React.useState(null);
+  const [templateData, setTemplateData] = React.useState(null);
+  const defaultCode = `# Define your behaviour logic here\nclass ${data.class || 'MyBehaviour'}:\n    def __init__(self):\n        pass\n\n    def run(self):\n        pass\n`;
   // Handle save changes
   const handleSaveChanges = (tempData) => {
     if (data.onChange) {
@@ -34,12 +39,18 @@ const BehaviourNode = ({ data, selected, id }) => {
       data.onModalStateChange(isOpen);
     }
   };
-
+  const getConnectedNodes = (nodeId) => {
+    if (data.getConnectedNodes) {
+      return data.getConnectedNodes(nodeId);
+    }
+    return [];
+  }
   // Handle double click
   const handleDoubleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     modalData.openModal();
+    //connectedNodes = getConnectedNodes(id); // You'll need to implement this
     handleModalStateChange(true);
   };
 
@@ -65,7 +76,6 @@ const BehaviourNode = ({ data, selected, id }) => {
       }
     });
   };
-
   // Handle code reset
   const handleCodeReset = () => {
     modalData.resetCode((field, value) => {
@@ -102,17 +112,17 @@ const BehaviourNode = ({ data, selected, id }) => {
 
     // Add type-specific attributes
     if (data.type === 'PeriodicBehaviour') {
-      baseAttrs.push({ 
-        label: "Period", 
+      baseAttrs.push({
+        label: "Period",
         value: formatPeriodForDisplay(data.period)
       });
-      baseAttrs.push({ 
-        label: "Start At", 
+      baseAttrs.push({
+        label: "Start At",
         value: formatDateForDisplay(data.start_at)
       });
     } else if (data.type === 'TimeoutBehaviour') {
-      baseAttrs.push({ 
-        label: "Start At", 
+      baseAttrs.push({
+        label: "Start At",
         value: formatDateForDisplay(data.start_at)
       });
     }
@@ -221,12 +231,19 @@ const BehaviourNode = ({ data, selected, id }) => {
         {/* Code Configuration Modal */}
         <CodeConfigurationModal
           open={modalData.codeModalOpen}
-          code={modalData.tempCode}
-          onChange={modalData.setTempCode}
+          code={tempConfigCode[data.type] || defaultCode}
+          onChange={(newCode) => setTempConfigCode(prev => ({
+            ...prev,
+            [data.type]: newCode
+          }))}
           onSave={handleCodeSave}
-          onCancel={modalData.closeCodeModal}
+          onCancel={handleCodeReset}
           onReset={handleCodeReset}
-          title={`Configure ${currentType} Code`}
+          title={`Configure ${data.type} Code`}
+          behaviorType={data.type}
+          connectedNodes={connectedNodes}
+          agentData={agentData} // Pass parent agent data
+          templateData={templateData} // Pass connected template data
         />
       </BaseNode>
     </>

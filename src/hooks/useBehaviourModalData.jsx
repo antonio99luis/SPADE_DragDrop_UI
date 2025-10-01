@@ -115,6 +115,8 @@ export const useBehaviourModalData = (initialData, requiredFields = []) => {
     if (onSaveCallback) {
       onSaveCallback('configCode', updated);
     }
+    setCodeModalOpen(false);
+
   };
 
   return {
