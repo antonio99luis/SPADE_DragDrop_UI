@@ -18,12 +18,8 @@ import './BehaviourNode.css';
 const BehaviourNode = ({ data, selected, id }) => {
   // Custom hook for modal data management with behaviour-specific logic
   const modalData = useBehaviourModalData(data, BEHAVIOUR_CONFIG.requiredFields);
-  const [codeModalOpen, setCodeModalOpen] = React.useState(false);
   const [connectedNodes, setConnectedNodes] = React.useState([]);
   const [tempConfigCode, setTempConfigCode] = React.useState({});
-  const [agentData, setAgentData] = React.useState(null);
-  const [templateData, setTemplateData] = React.useState(null);
-  const defaultCode = `# Define your behaviour logic here\nclass ${data.class || 'MyBehaviour'}:\n    def __init__(self):\n        pass\n\n    def run(self):\n        pass\n`;
   // Handle save changes
   const handleSaveChanges = (tempData) => {
     if (data.onChange) {
@@ -78,12 +74,12 @@ const BehaviourNode = ({ data, selected, id }) => {
   };
   // Handle code reset
   const handleCodeReset = () => {
-    modalData.resetCode((field, value) => {
-      if (data.onChange) {
-        data.onChange(id, field, value);
-      }
-    });
+    setTempConfigCode(prev => ({
+      ...prev,
+      [data.type]: defaultCode
+    }));
   };
+
 
   // Helper to format date for display
   const formatDateForDisplay = (dateString) => {
@@ -231,19 +227,12 @@ const BehaviourNode = ({ data, selected, id }) => {
         {/* Code Configuration Modal */}
         <CodeConfigurationModal
           open={modalData.codeModalOpen}
-          code={tempConfigCode[data.type] || defaultCode}
-          onChange={(newCode) => setTempConfigCode(prev => ({
-            ...prev,
-            [data.type]: newCode
-          }))}
-          onSave={handleCodeSave}
-          onCancel={handleCodeReset}
-          onReset={handleCodeReset}
-          title={`Configure ${data.type} Code`}
-          behaviorType={data.type}
-          connectedNodes={connectedNodes}
-          agentData={agentData} // Pass parent agent data
-          templateData={templateData} // Pass connected template data
+          code={modalData.tempCode}
+          onChange={modalData.handleTempCodeChange} // Use the new handler
+          onSave={modalData.saveCode}              // Saves and closes
+          onCancel={modalData.closeCodeModal}      // Reverts and closes  
+          onReset={modalData.resetCode}            // Resets to default (stays open)
+          title="Configure Behaviour Code"
         />
       </BaseNode>
     </>

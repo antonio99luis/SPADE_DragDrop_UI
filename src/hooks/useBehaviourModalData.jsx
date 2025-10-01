@@ -28,6 +28,7 @@ export const useBehaviourModalData = (initialData, requiredFields = []) => {
   const modalData = useModalData(initialData, requiredFields);
   const [codeModalOpen, setCodeModalOpen] = useState(false);
   const [tempCode, setTempCode] = useState('');
+  const [originalCodeBeforeEdit, setOriginalCodeBeforeEdit] = useState('');
   const [codeByType, setCodeByType] = useState(() => {
     const initial = {};
     BEHAVIOUR_TYPES.forEach(type => {
@@ -85,38 +86,40 @@ export const useBehaviourModalData = (initialData, requiredFields = []) => {
     const currentType = modalData.getCurrentValue('type');
     const currentClass = modalData.getCurrentValue('class');
     const code = codeByType[currentType] || getDefaultConfigCode(currentType, currentClass);
+    
     setTempCode(code);
+    setOriginalCodeBeforeEdit(code); // Store original code for cancel functionality
     setCodeModalOpen(true);
   };
 
-  // Save code
-  const saveCode = (onSaveCallback) => {
+  // Save code and close modal
+  const saveCode = () => {
     const currentType = modalData.getCurrentValue('type');
     const updated = { ...codeByType, [currentType]: tempCode };
     setCodeByType(updated);
-    
-    if (onSaveCallback) {
-      onSaveCallback('configCode', updated);
-    }
-    
     setCodeModalOpen(false);
   };
 
-  // Reset code
-  const resetCode = (onSaveCallback) => {
+  // Reset to default code (but don't close modal)
+  const resetCode = () => {
     const currentType = modalData.getCurrentValue('type');
     const currentClass = modalData.getCurrentValue('class');
     const defaultCode = getDefaultConfigCode(currentType, currentClass);
     
-    const updated = { ...codeByType, [currentType]: defaultCode };
-    setCodeByType(updated);
+    // Update tempCode to show the reset in the editor
     setTempCode(defaultCode);
-    
-    if (onSaveCallback) {
-      onSaveCallback('configCode', updated);
-    }
-    setCodeModalOpen(false);
+  };
 
+  // Close modal without saving - revert to original code
+  const closeCodeModal = () => {
+    // Revert tempCode back to the original code before editing
+    setTempCode(originalCodeBeforeEdit);
+    setCodeModalOpen(false);
+  };
+
+  // Handle tempCode changes in the editor
+  const handleTempCodeChange = (newCode) => {
+    setTempCode(newCode);
   };
 
   return {
@@ -126,10 +129,11 @@ export const useBehaviourModalData = (initialData, requiredFields = []) => {
     codeModalOpen,
     tempCode,
     setTempCode,
+    handleTempCodeChange,
     codeByType,
     openCodeModal,
     saveCode,
     resetCode,
-    closeCodeModal: () => setCodeModalOpen(false),
+    closeCodeModal,
   };
 };
