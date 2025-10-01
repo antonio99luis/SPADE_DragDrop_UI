@@ -8,8 +8,7 @@
 import { toCamelCase, toPythonValue } from './stringUtils';
 
 export const generateSpadeCode = (nodes, edges) => {
-  console.log("Generating code with nodes:", nodes);
-  console.log("and edges:", edges);
+
   // Base template
   const baseTemplate = `# SPADE Base Template\n\n` +
     `from spade.agent import Agent\n\n` +

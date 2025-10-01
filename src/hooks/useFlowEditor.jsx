@@ -32,7 +32,6 @@ export const useFlowEditor = () => {
   }, [setNodes]);
 
   const onConnect = useCallback((params) => {
-    console.log("onConnect", params);
     const edgeType = checkConnectionType(
       nodes,
       edges,

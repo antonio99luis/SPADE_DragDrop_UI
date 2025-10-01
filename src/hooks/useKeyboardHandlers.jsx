@@ -10,10 +10,8 @@ export const useKeyboardHandlers = (
 ) => {
   useEffect(() => {
     const handleKeyDown = (event) => {
-      console.log('Key pressed:', event.key, 'Modal open:', isAnyModalOpen);
       
       if (isAnyModalOpen) {
-        console.log('Prevented deletion - modal is open');
         return;
       }
 
