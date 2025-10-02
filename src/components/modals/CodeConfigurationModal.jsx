@@ -397,7 +397,7 @@ const CodeConfigurationModal = ({
           </Typography>
 
           <Box sx={{
-            height: 'calc(100% - 60px)',
+            height: 'calc(90% - 60px)',
             border: '1px solid #ccc',
             borderRadius: '4px'
           }}>

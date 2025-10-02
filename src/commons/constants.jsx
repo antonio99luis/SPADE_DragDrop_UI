@@ -3,6 +3,7 @@ export const NODE_TYPES = {
   AGENT: "agent",
   BEHAVIOUR: "behaviour",
   TEMPLATE: "template",
+  MESSAGE: "message",
   STICKY_NOTE: "stickyNote",
 };
 
@@ -12,6 +13,7 @@ export const EDGE_TYPES = {
   AGENT_BEHAVIOUR: "agentBehaviour",
   INHERITANCE: "inheritance",
   TEMPLATE: "template",
+  MESSAGE: "message",
 };
 
 // Claves de manejo (sourceHandle y targetHandle)
@@ -22,6 +24,7 @@ export const HANDLE_KEYS = {
   INHERITANCE_SOURCE: "inheritance-source",
   INHERITANCE_TARGET: "inheritance-target",
   TEMPLATE: "template",
+  MESSAGE: "message",
 };
 
 

@@ -1,0 +1,17 @@
+.message-edge-path {
+  stroke-width: 1.5 !important;
+}
+
+.message-edge-label {
+  font-size: 13px;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  user-select: none;
+}
+
+
+.message-edge-selected {
+  stroke: var(--primary-color) !important;
+}

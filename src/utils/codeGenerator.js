@@ -114,7 +114,7 @@ export const generateSpadeCode = (nodes, edges) => {
   const generateBehaviourCode = (behaviour) => {
     const behType = behaviour.data.type;
     const behName = behaviour.data.class || `My${behType}`;
-    const behCode = behaviour.data.configCode?.[behType] ||
+    const behCode = behaviour.data.configCode[behType] ||
       `class ${behName}(${behType}):\n    async def run(self):\n        pass\n`;
     return { behName, behCode };
   };
