@@ -82,7 +82,7 @@ export const BEHAVIOUR_TYPES = [
   'OneShotBehaviour',
   'TimeoutBehaviour',
   'PeriodicBehaviour',
-  'FSMBehavior'
+  'FSMBehaviour'
 ];
 
 export const DEFAULT_CONFIG_CODE = {
@@ -130,11 +130,7 @@ export const DEFAULT_CONFIG_CODE = {
         # Write your periodic behaviour end code here
         pass
 `,
-FSMBehavior: `class ExampleFSMBehaviour(FSMBehaviour):
-    STATE_ONE = "STATE_ONE"
-    STATE_TWO = "STATE_TWO"
-    STATE_THREE = "STATE_THREE"
-
+FSMBehaviour: `class ExampleFSMBehaviour(FSMBehaviour):
     async def on_start(self):
         # Write your FSM behaviour start code here
         pass
@@ -145,7 +141,9 @@ FSMBehavior: `class ExampleFSMBehaviour(FSMBehaviour):
 
     def __init__(self):
         super().__init__()
-
+        STATE_ONE = "STATE_ONE"
+        STATE_TWO = "STATE_TWO"
+        STATE_THREE = "STATE_THREE"
         # Define states *inside* the behaviour
         class StateOne(State):
             async def run(inner_self):

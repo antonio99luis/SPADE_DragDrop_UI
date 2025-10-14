@@ -9,7 +9,7 @@
 
 .message-node-selected {
   box-shadow: 0 0 0 1px #f2be6f;
-  border: 2px solid var(--primary-color);
+  border: 3px solid var(--primary-color);
 }
 
 .message-node:hover{

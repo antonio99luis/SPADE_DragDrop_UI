@@ -90,7 +90,7 @@ export const generateSpadeCode = (nodes, edges) => {
         break;
 
       case 'FSMBehaviour':
-        // FSM might have states configuration
+        // FSM doesn't need special parameters
         break;
 
       case 'CyclicBehaviour':
