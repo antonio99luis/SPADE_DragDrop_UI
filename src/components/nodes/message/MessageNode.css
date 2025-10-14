@@ -1,12 +1,23 @@
 
-.behaviour-node-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.message-node {
+  border: 2px solid #bdbdbd;
+  border-radius: 8px;
+  background: #fff; 
+  width: 200px !important;    /* Adjust width as needed */
+  min-width: 180px;
 }
 
-.behaviour-node-input {
-  width: 135px;    /* Adjust width as needed */
-  min-width: 135px;
+.message-node-selected {
+  box-shadow: 0 0 0 1px #f2be6f;
+  border: 3px solid var(--primary-color);
+}
+
+.message-node:hover{
+  border: 2px solid var(--primary-color);
+}
+
+.message-node-input {
+  width: 110px;    /* Adjust width as needed */
   padding: 2px 6px;
   font-size: 14px;
   border-radius: 4px;
@@ -14,33 +25,21 @@
   margin-left: 4px;
 }
 
-.behaviour-node {
-  border: 2px solid #bdbdbd;
-  border-radius: 8px;
-  background: #fff; 
-  width: 220px !important;    /* Adjust width as needed */
-  min-width: 180px;
+.message-node-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.behaviour-node-selected {
-  box-shadow: 0 0 0 1px #f2be6f;
-  border: 3px solid var(--primary-color);
-}
-
-.behaviour-node:hover{
-  border: 2px solid var(--primary-color);
-}
-
-
-.behaviour-node-attributes {
+.message-node-attributes {
   display: flex;
   flex-direction: column;
   padding: 6px;
 }
 
-.behaviour-config-btn {
+
+.message-metadata-btn {
   margin-top: 8px;
-    margin-left: 6px;
+  margin-left: 6px;
   margin-right: 6px;
   padding: 6px 6px;
   color: var(--primary-color);
@@ -48,7 +47,7 @@
   border-radius: 50px;
   cursor: pointer;
 }
-.behaviour-config-btn:hover {
+.message-metadata-btn:hover {
   background: #f2be6f;
   border: 1px solid var(--primary-color);
   color: #ffffff

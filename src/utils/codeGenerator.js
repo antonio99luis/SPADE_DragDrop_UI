@@ -8,8 +8,7 @@
 import { toCamelCase, toPythonValue } from './stringUtils';
 
 export const generateSpadeCode = (nodes, edges) => {
-  console.log("Generating code with nodes:", nodes);
-  console.log("and edges:", edges);
+
   // Base template
   const baseTemplate = `# SPADE Base Template\n\n` +
     `from spade.agent import Agent\n\n` +
@@ -91,7 +90,7 @@ export const generateSpadeCode = (nodes, edges) => {
         break;
 
       case 'FSMBehaviour':
-        // FSM might have states configuration
+        // FSM doesn't need special parameters
         break;
 
       case 'CyclicBehaviour':
@@ -115,7 +114,7 @@ export const generateSpadeCode = (nodes, edges) => {
   const generateBehaviourCode = (behaviour) => {
     const behType = behaviour.data.type;
     const behName = behaviour.data.class || `My${behType}`;
-    const behCode = behaviour.data.configCode?.[behType] ||
+    const behCode = behaviour.data.configCode[behType] ||
       `class ${behName}(${behType}):\n    async def run(self):\n        pass\n`;
     return { behName, behCode };
   };

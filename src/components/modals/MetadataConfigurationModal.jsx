@@ -44,7 +44,6 @@ const MetadataConfigurationModal = ({
 
   // Validate JSON
   const isValidJSON = (str) => {
-    console.log("Validating JSON:", str);
     try {
       JSON.parse(str);
       return true;

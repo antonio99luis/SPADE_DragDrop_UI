@@ -105,6 +105,14 @@ export const checkConnectionType = (nodes, edges, source, target, sourceHandle, 
     );
     return !alreadyHasTemplate ? EDGE_TYPES.TEMPLATE : false;
   }
+
+  if (
+    sourceNode.type === NODE_TYPES.BEHAVIOUR &&
+    targetNode.type === NODE_TYPES.MESSAGE &&
+    sourceHandle === HANDLE_KEYS.MESSAGE &&
+    targetHandle === HANDLE_KEYS.MESSAGE
+  )
+    return EDGE_TYPES.MESSAGE;
   
   return false;
 };
@@ -139,6 +147,16 @@ const nextTemplate = (baseData) => {
           metadataCode: "{}",
         }; 
       }
+
+const nextMessage = (baseData) => {
+ return {
+          ...baseData,
+          sender: "",
+          to: "",
+          body: "",
+          thread: ""
+        }; 
+      }
 const nextStickyNote = (baseData) => {
  return {
           ...baseData,
@@ -161,6 +179,9 @@ export const createNodeData = (type, nodes, handleNodeDataChange, handleModalSta
       
       case NODE_TYPES.TEMPLATE:
         return nextTemplate(baseData);
+
+      case NODE_TYPES.MESSAGE:
+        return nextMessage(baseData);
       
       case NODE_TYPES.STICKY_NOTE:
         return nextStickyNote(baseData);

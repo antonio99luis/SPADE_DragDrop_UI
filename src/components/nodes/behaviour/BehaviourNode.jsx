@@ -3,11 +3,11 @@ import React, { useMemo } from 'react';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
 import CodeConfigurationModal from '../../modals/CodeConfigurationModal';
-import { 
-  TextFormField, 
-  SelectFormField, 
-  FloatFormField, 
-  DateTimeFormField 
+import {
+  TextFormField,
+  SelectFormField,
+  FloatFormField,
+  DateTimeFormField
 } from '../../forms/FormField';
 import { useBehaviourModalData } from '../../../hooks/useBehaviourModalData';
 import { BEHAVIOUR_CONFIG, BEHAVIOUR_TYPES } from '../../../config/nodeConfigs';
@@ -18,7 +18,8 @@ import './BehaviourNode.css';
 const BehaviourNode = ({ data, selected, id }) => {
   // Custom hook for modal data management with behaviour-specific logic
   const modalData = useBehaviourModalData(data, BEHAVIOUR_CONFIG.requiredFields);
-
+  const [connectedNodes, setConnectedNodes] = React.useState([]);
+  const [tempConfigCode, setTempConfigCode] = React.useState({});
   // Handle save changes
   const handleSaveChanges = (tempData) => {
     if (data.onChange) {
@@ -34,12 +35,18 @@ const BehaviourNode = ({ data, selected, id }) => {
       data.onModalStateChange(isOpen);
     }
   };
-
+  const getConnectedNodes = (nodeId) => {
+    if (data.getConnectedNodes) {
+      return data.getConnectedNodes(nodeId);
+    }
+    return [];
+  }
   // Handle double click
   const handleDoubleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     modalData.openModal();
+    //connectedNodes = getConnectedNodes(id); // You'll need to implement this
     handleModalStateChange(true);
   };
 
@@ -65,15 +72,14 @@ const BehaviourNode = ({ data, selected, id }) => {
       }
     });
   };
-
   // Handle code reset
   const handleCodeReset = () => {
-    modalData.resetCode((field, value) => {
-      if (data.onChange) {
-        data.onChange(id, field, value);
-      }
-    });
+    setTempConfigCode(prev => ({
+      ...prev,
+      [data.type]: defaultCode
+    }));
   };
+
 
   // Helper to format date for display
   const formatDateForDisplay = (dateString) => {
@@ -102,17 +108,17 @@ const BehaviourNode = ({ data, selected, id }) => {
 
     // Add type-specific attributes
     if (data.type === 'PeriodicBehaviour') {
-      baseAttrs.push({ 
-        label: "Period", 
+      baseAttrs.push({
+        label: "Period",
         value: formatPeriodForDisplay(data.period)
       });
-      baseAttrs.push({ 
-        label: "Start At", 
+      baseAttrs.push({
+        label: "Start At",
         value: formatDateForDisplay(data.start_at)
       });
     } else if (data.type === 'TimeoutBehaviour') {
-      baseAttrs.push({ 
-        label: "Start At", 
+      baseAttrs.push({
+        label: "Start At",
         value: formatDateForDisplay(data.start_at)
       });
     }
@@ -222,11 +228,11 @@ const BehaviourNode = ({ data, selected, id }) => {
         <CodeConfigurationModal
           open={modalData.codeModalOpen}
           code={modalData.tempCode}
-          onChange={modalData.setTempCode}
-          onSave={handleCodeSave}
-          onCancel={modalData.closeCodeModal}
-          onReset={handleCodeReset}
-          title={`Configure ${currentType} Code`}
+          onChange={modalData.handleTempCodeChange} // Use the new handler
+          onSave={modalData.saveCode}              // Saves and closes
+          onCancel={modalData.closeCodeModal}      // Reverts and closes  
+          onReset={modalData.resetCode}            // Resets to default (stays open)
+          title="Configure Behaviour Code"
         />
       </BaseNode>
     </>

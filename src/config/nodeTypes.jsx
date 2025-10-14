@@ -3,7 +3,7 @@ import AgentNode from "../components/nodes/agent/AgentNode";
 import BehaviourNode from "../components/nodes/behaviour/BehaviourNode";
 import TemplateNode from "../components/nodes/template/TemplateNode";
 import StickyNoteNode from "../components/nodes/sticky-note/StickyNoteNode";
-
+import MessageNode from "../components/nodes/message/MessageNode";
 export const createNodeTypes = (handleModalStateChange) => ({
   agent: (props) => (
     <AgentNode 
@@ -26,6 +26,15 @@ export const createNodeTypes = (handleModalStateChange) => ({
   template: (props) => (
     <TemplateNode 
       {...props} 
+      data={{
+        ...props.data,
+        onModalStateChange: handleModalStateChange
+      }}
+    />
+  ),
+  message: (props) => (
+    <MessageNode
+      {...props}
       data={{
         ...props.data,
         onModalStateChange: handleModalStateChange

@@ -29,7 +29,87 @@
     background-color: #f9f9f9;
   }
 }
+/* Dark mode styles for ReactFlow */
+@media (prefers-color-scheme: dark) {
+  /* Controls styling */
+  .react-flow__controls {
+    background: #1a1a1a !important;
+    border: 1px solid #444 !important;
+  }
 
+  .react-flow__controls-button {
+    background: #2a2a2a !important;
+    border: none !important;
+    color: #ffffff !important;
+    fill: #ffffff !important;
+  }
+
+  .react-flow__controls-button:hover {
+    background: #3a3a3a !important;
+  }
+
+  .react-flow__controls-button svg {
+    fill: #ffffff !important;
+  }
+
+  /* MiniMap styling */
+  .react-flow__minimap {
+    background: #1a1a1a !important;
+    border: 1px solid #444 !important;
+  }
+
+  .react-flow__minimap-mask {
+    fill: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .react-flow__minimap-node {
+    fill: #555 !important;
+    stroke: #777 !important;
+  }
+
+  /* Background styling */
+  .react-flow__background {
+    background: #1a1a1a !important;
+  }
+
+  .react-flow__background .react-flow__background-pattern {
+    color: #333 !important;
+  }
+
+  /* Selection box */
+  .react-flow__selection {
+    background: rgba(255, 152, 0, 0.1) !important;
+    border: 1px solid var(--primary-color) !important;
+  }
+
+  /* Edge styling */
+  .react-flow__edge-path {
+    stroke: #666 !important;
+  }
+
+  .react-flow__edge.selected .react-flow__edge-path {
+    stroke: var(--primary-color) !important;
+  }
+
+  /* Node styling adjustments */
+  .react-flow__node {
+    color: #ffffff;
+  }
+
+  .react-flow__node.selected {
+    box-shadow: 0 0 0 2px var(--primary-color) !important;
+  }
+
+  /* Handle styling */
+  .react-flow__handle {
+    background: #666 !important;
+    border: 2px solid #888 !important;
+  }
+
+  .react-flow__handle.react-flow__handle-valid {
+    background: var(--primary-color) !important;
+  }
+}
 /* DatePicker z-index overrides */
 .MuiPickersPopper-root,
 .MuiPickersLayout-root,
