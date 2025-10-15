@@ -130,7 +130,7 @@ export const DEFAULT_CONFIG_CODE = {
         # Write your periodic behaviour end code here
         pass
 `,
-FSMBehaviour: `class ExampleFSMBehaviour(FSMBehaviour):
+FSMBehaviour: `class MyFSMBehaviour(FSMBehaviour):
     async def on_start(self):
         # Write your FSM behaviour start code here
         pass

@@ -56,8 +56,19 @@ const BehaviourNode = ({ data, selected, id }) => {
     handleModalStateChange(false);
   };
 
-  // Handle save
+  // Handle save with extra validation for start time mode
   const handleSave = () => {
+    const currentType = modalData.getCurrentValue('type');
+    const mode = modalData.getCurrentValue('start_at_mode') || 'absolute';
+    if ((currentType === 'PeriodicBehaviour' || currentType === 'TimeoutBehaviour') && mode === 'relative') {
+      const val = modalData.getCurrentValue('start_at_offset_s');
+      const num = val === '' || val === undefined ? NaN : Number(val);
+      if (!Number.isFinite(num) || num < 0) {
+        window.alert('Start after (seconds) must be a non-negative number when using relative start time.');
+        return;
+      }
+    }
+
     const saved = modalData.saveChanges(handleSaveChanges);
     if (saved) {
       handleModalStateChange(false);
@@ -112,15 +123,17 @@ const BehaviourNode = ({ data, selected, id }) => {
         label: "Period",
         value: formatPeriodForDisplay(data.period)
       });
-      baseAttrs.push({
-        label: "Start At",
-        value: formatDateForDisplay(data.start_at)
-      });
+      if ((data.start_at_mode || 'absolute') === 'relative') {
+        baseAttrs.push({ label: 'Start After (s)', value: data.start_at_offset_s ?? 'Not set' });
+      } else {
+        baseAttrs.push({ label: 'Start At', value: formatDateForDisplay(data.start_at) });
+      }
     } else if (data.type === 'TimeoutBehaviour') {
-      baseAttrs.push({
-        label: "Start At",
-        value: formatDateForDisplay(data.start_at)
-      });
+      if ((data.start_at_mode || 'absolute') === 'relative') {
+        baseAttrs.push({ label: 'Start After (s)', value: data.start_at_offset_s ?? 'Not set' });
+      } else {
+        baseAttrs.push({ label: 'Start At', value: formatDateForDisplay(data.start_at) });
+      }
     }
 
     return baseAttrs;
@@ -189,26 +202,82 @@ const BehaviourNode = ({ data, selected, id }) => {
                 step={0.1}
               />
 
-              <DateTimeFormField
-                label="Start At"
-                value={modalData.getCurrentValue('start_at')}
-                onChange={(value) => modalData.handleTempChange('start_at', value)}
-                onBlur={() => modalData.handleBlur('start_at')}
-                helperText="When the behaviour should start (optional)"
-                placeholder="Select date and time"
+              <SelectFormField
+                label="Start time mode"
+                value={modalData.getCurrentValue('start_at_mode') || 'absolute'}
+                onChange={(value) => {
+                  modalData.handleTempChange('start_at_mode', value);
+                  if (value === 'absolute') {
+                    modalData.handleTempChange('start_at_offset_s', '');
+                  } else {
+                    modalData.handleTempChange('start_at', '');
+                  }
+                }}
+                options={['absolute', 'relative']}
+                helperText="Choose absolute date/time or relative seconds from now"
               />
+
+              { (modalData.getCurrentValue('start_at_mode') || 'absolute') === 'absolute' ? (
+                <DateTimeFormField
+                  label="Start At"
+                  value={modalData.getCurrentValue('start_at')}
+                  onChange={(value) => modalData.handleTempChange('start_at', value)}
+                  onBlur={() => modalData.handleBlur('start_at')}
+                  helperText="When the behaviour should start (optional)"
+                  placeholder="Select date and time"
+                />
+              ) : (
+                <FloatFormField
+                  label="Start after (seconds)"
+                  value={modalData.getCurrentValue('start_at_offset_s')}
+                  onChange={(value) => modalData.handleTempChange('start_at_offset_s', value)}
+                  placeholder="e.g., 2.5"
+                  helperText="Seconds to wait from now before first run"
+                  min={0}
+                  step={0.1}
+                />
+              )}
             </>
           )}
 
           {currentType === 'TimeoutBehaviour' && (
-            <DateTimeFormField
-              label="Start At"
-              value={modalData.getCurrentValue('start_at')}
-              onChange={(value) => modalData.handleTempChange('start_at', value)}
-              onBlur={() => modalData.handleBlur('start_at')}
-              helperText="When the behaviour should start (optional)"
-              placeholder="Select date and time"
-            />
+            <>
+              <SelectFormField
+                label="Start time mode"
+                value={modalData.getCurrentValue('start_at_mode') || 'absolute'}
+                onChange={(value) => {
+                  modalData.handleTempChange('start_at_mode', value);
+                  if (value === 'absolute') {
+                    modalData.handleTempChange('start_at_offset_s', '');
+                  } else {
+                    modalData.handleTempChange('start_at', '');
+                  }
+                }}
+                options={['absolute', 'relative']}
+                helperText="Choose absolute date/time or relative seconds from now"
+              />
+
+              { (modalData.getCurrentValue('start_at_mode') || 'absolute') === 'absolute' ? (
+                <DateTimeFormField
+                  label="Start At"
+                  value={modalData.getCurrentValue('start_at')}
+                  onChange={(value) => modalData.handleTempChange('start_at', value)}
+                  onBlur={() => modalData.handleBlur('start_at')}
+                  helperText="When the behaviour should start (optional)"
+                  placeholder="Select date and time"
+                />
+              ) : (
+                <FloatFormField
+                  label="Start after (seconds)"
+                  value={modalData.getCurrentValue('start_at_offset_s')}
+                  onChange={(value) => modalData.handleTempChange('start_at_offset_s', value)}
+                  placeholder="e.g., 2.5"
+                  helperText="Seconds to wait from now before first run"
+                  min={0}
+                  step={0.1}
+                />
+              )}
+            </>
           )}
 
           {/* Configure Code Button */}

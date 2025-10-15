@@ -72,7 +72,12 @@ export const generateSpadeCode = (nodes, edges) => {
 
     switch (behType) {
       case 'TimeoutBehaviour':
-        if (behaviour.data.start_at) {
+        if ((behaviour.data.start_at_mode || 'absolute') === 'relative') {
+          const seconds = Number(behaviour.data.start_at_offset_s);
+          if (Number.isFinite(seconds) && seconds >= 0) {
+            params.push(`start_at=(datetime.now() + timedelta(seconds=${seconds}))`);
+          }
+        } else if (behaviour.data.start_at) {
           // Convert start_at to datetime string
           const startAt = new Date(behaviour.data.start_at).toISOString();
           params.push(`start_at=datetime.fromisoformat('${startAt.slice(0, -1)}')`);
@@ -83,7 +88,12 @@ export const generateSpadeCode = (nodes, edges) => {
         if (behaviour.data.period) {
           params.push(`period=${behaviour.data.period}`);
         }
-        if (behaviour.data.start_at) {
+        if ((behaviour.data.start_at_mode || 'absolute') === 'relative') {
+          const seconds = Number(behaviour.data.start_at_offset_s);
+          if (Number.isFinite(seconds) && seconds >= 0) {
+            params.push(`start_at=(datetime.now() + timedelta(seconds=${seconds}))`);
+          }
+        } else if (behaviour.data.start_at) {
           const startAt = new Date(behaviour.data.start_at).toISOString();
           params.push(`start_at=datetime.fromisoformat('${startAt.slice(0, -1)}')`);
         }
@@ -142,7 +152,7 @@ export const generateSpadeCode = (nodes, edges) => {
     return { tempName, tempCode };
   };
   // UPDATED: Generate agent code with behavior constructor parameters
-  const generateAgentCode = (agent, behavioursData, friendsJids, agentTemplates) => {
+  const generateAgentCode = (agent, friendsJids) => {
     const agentName = agent.data.name || "Agent";
     const auxClass = agent.data.class || "MyAgent";
     let agentClass = `class ${auxClass}(Agent):\n`;
@@ -154,26 +164,7 @@ export const generateSpadeCode = (nodes, edges) => {
         agentClass += `        await self.presence.subscribe('${friendJid}')\n`;
       });
     }
-    // Generate template code for this agent
-    if (agentTemplates && agentTemplates.length > 0) {
-      agentClass += `        # Templates\n`;
-      agentTemplates.forEach(({ tempName, tempCode }) => {
-        const indentedTempCode = tempCode
-          .split('\n')
-          .map(line => line ? `        ${line}` : '')
-          .join('\n');
-        agentClass += indentedTempCode;
-      });
-      agentClass += `\n`;
-    }
-    // Add behaviours with their specific constructor parameters (including templates)
-    if (behavioursData && behavioursData.length > 0) {
-      agentClass += `        # Behaviours\n`;
-      behavioursData.forEach(({ behName, constructorParams }) => {
-        agentClass += `        self.add_behaviour(${behName}${constructorParams})\n`;
-      });
-      agentClass += `\n`;
-    }
+    // (Behaviours and Templates are created/added in main())
 
     // Add knowledge base entries
     if (agent.data.metadata) {
@@ -229,6 +220,7 @@ export const generateSpadeCode = (nodes, edges) => {
 
     const constructorParams = getBehaviourConstructorParams(b, templateName);
     behaviourInfo[b.id] = { behName, constructorParams };
+    console.log(behCode)
     behaviourCodeBlocks.push(behCode);
   });
 
@@ -281,12 +273,17 @@ export const generateSpadeCode = (nodes, edges) => {
   // Import Agent if any agent node exists
   const agentImport = agents.length > 0 ? "from spade.agent import Agent\n" : "";
 
-  // NEW: Check if we need datetime import
-  const needsDatetime = behaviours.some(b =>
-    (b.data.type === 'TimeoutBehaviour' || b.data.type === 'PeriodicBehaviour') &&
-    b.data.start_at
-  );
-  const datetimeImport = needsDatetime ? "from datetime import datetime\n" : "";
+  // NEW: Check if we need datetime/timedelta import (absolute or relative start)
+  const needsDatetime = behaviours.some(b => {
+    if (!(b.data && (b.data.type === 'TimeoutBehaviour' || b.data.type === 'PeriodicBehaviour'))) return false;
+    const mode = b.data.start_at_mode || 'absolute';
+    if (mode === 'relative') {
+      const seconds = Number(b.data.start_at_offset_s);
+      return Number.isFinite(seconds) && seconds >= 0;
+    }
+    return !!b.data.start_at;
+  });
+  const datetimeImport = needsDatetime ? "from datetime import datetime, timedelta\n" : "";
 
   // Add template import
   const templateImport = templates.length > 0 ? "from spade.template import Template\n" : "";
@@ -303,14 +300,8 @@ export const generateSpadeCode = (nodes, edges) => {
   // UPDATED: Generate code for agents with behavior constructor parameters
   const agentCodeBlocks = [];
   agents.forEach((a) => {
-    const behIds = agentBehaviours[a.id];
-    const behavioursData = behIds.map((bid) => behaviourInfo[bid]);
     const friendsJids = Array.from(agentFriends[a.id]);
-
-    // Get templates used by this agent
-    const agentTemplateData = Array.from(agentTemplateIds[a.id]).map((tempId) => templateInfo[tempId]);
-
-    agentCodeBlocks.push(generateAgentCode(a, behavioursData, friendsJids, agentTemplateData));
+    agentCodeBlocks.push(generateAgentCode(a, friendsJids));
   });
 
   // Generate agent instantiation and main function code
@@ -329,7 +320,54 @@ export const generateSpadeCode = (nodes, edges) => {
     return `    await ${agentName.toLowerCase()}.start()`;
   });
 
-  const agentStartup = [...agentInstances, ...agentStarts].join("\n");
+  // Build templates per agent (in main scope), then behaviours, then start agents
+  const perAgentTemplateBlocks = [];
+  const perAgentBehaviourBlocks = [];
+
+  agents.forEach((a) => {
+    const agentVar = (a.data.name || 'Agent').toLowerCase();
+    const behIds = agentBehaviours[a.id] || [];
+    const templateIds = Array.from(agentTemplateIds[a.id] || []);
+
+    // Templates used by this agent
+    if (templateIds.length > 0) {
+      perAgentTemplateBlocks.push(`    # Templates for ${agentVar}`);
+      templateIds.forEach((tid) => {
+        const info = templateInfo[tid];
+        if (info?.tempCode) {
+          const lines = info.tempCode.split('\n').filter(Boolean).map(l => `    ${l}`);
+          perAgentTemplateBlocks.push(...lines);
+        }
+      });
+    }
+
+    // Behaviours for this agent
+    behIds.forEach((bid) => {
+      const binfo = behaviourInfo[bid];
+      if (!binfo) return;
+      const bNode = behaviours.find(bb => bb.id === bid);
+      const behVar = `${agentVar}_${(binfo.behName || 'beh').toLowerCase()}`;
+      // Instantiate behaviour
+      perAgentBehaviourBlocks.push(`    ${behVar} = ${binfo.behName}${binfo.constructorParams}`);
+      // Add to agent
+      perAgentBehaviourBlocks.push(`    ${agentVar}.add_behaviour(${behVar})`);
+      // Also expose behaviour as attribute on the agent instance for easy access
+      const rawProp = (bNode?.data?.class || binfo.behName || 'behaviour');
+      const propName = rawProp
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .replace(/[^a-zA-Z0-9_]/g, '_')
+        .toLowerCase();
+      perAgentBehaviourBlocks.push(`    ${agentVar}.${propName} = ${behVar}`);
+    });
+  });
+
+  const agentStartup = [
+    ...agentInstances,
+    ...perAgentTemplateBlocks,
+    ...perAgentBehaviourBlocks,
+    ...agentStarts
+  ].join("\n");
+
   const agentNamesList = agents.map((a) => a.data.name.toLowerCase()).join(", ");
   const waitUntilFinishedCode = agents.length > 0 ? `    await wait_until_finished([${agentNamesList}])` : "";
 
