@@ -264,10 +264,11 @@ export const generateSpadeCode = (nodes, edges) => {
     }
   });
 
-  // Collect unique behaviour types for import
+  // Collect unique behaviour types for import (include State when FSM is used)
   const behaviourTypes = [...new Set(behaviours.map((b) => b.data.type))].sort();
+  const usesFSM = behaviourTypes.includes('FSMBehaviour');
   const behaviourImports = behaviourTypes.length > 0
-    ? `from spade.behaviour import ${behaviourTypes.join(", ")}\n`
+    ? `from spade.behaviour import ${behaviourTypes.join(", ")}${usesFSM ? ", State" : ""}\n`
     : "";
 
   // Import Agent if any agent node exists
