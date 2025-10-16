@@ -1,6 +1,8 @@
 // Tipos de nodos
 export const NODE_TYPES = {
   AGENT: "agent",
+  AGENT_BDI: "agentBDI",
+  AGENT_LLM: "agentLLM",
   BEHAVIOUR: "behaviour",
   TEMPLATE: "template",
   MESSAGE: "message",

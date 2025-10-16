@@ -14,6 +14,8 @@ import "./NodeToolbar.css";
 
 const SPADE_NODES = [
   { type: "agent", label: "Agent", image: agentSVG },
+  { type: "agentBDI", label: "Agent (BDI)", image: agentSVG },
+  { type: "agentLLM", label: "Agent (LLM)", image: agentSVG },
   { type: "behaviour", label: "Behaviour", image: behaviourSVG },
   { type: "template", label: "Template", image: templateSVG },
   { type: "message", label: "Message", image: messageSVG },

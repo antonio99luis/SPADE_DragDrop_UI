@@ -16,6 +16,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import Chip from '@mui/material/Chip';
 
 
 
@@ -349,5 +350,119 @@ export const FloatFormField = ({
             }}
             {...props}
         />
+    );
+};
+
+// List form field for arrays of strings (e.g., beliefs)
+export const ListFormField = ({
+    label,
+    value = [],
+    onChange,
+    placeholder = "Type and press Enter or ,",
+    helperText,
+    error,
+    allowDuplicates = false,
+    trim = true,
+    ...props
+}) => {
+    const [inputValue, setInputValue] = React.useState("");
+
+    const addToken = (raw) => {
+        let v = raw;
+        if (trim) v = (v || "").trim();
+        if (!v) return;
+        if (!allowDuplicates && value.includes(v)) return;
+        onChange([...(value || []), v]);
+    };
+
+    const parseAndAdd = (text) => {
+        if (!text) return;
+        const parts = text.split(',').map(s => (trim ? s.trim() : s));
+        parts.forEach(t => addToken(t));
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            parseAndAdd(inputValue);
+            setInputValue("");
+        } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
+            // Remove last chip when input is empty
+            const next = value.slice(0, -1);
+            onChange(next);
+        }
+    };
+
+    const handleBlur = () => {
+        if (inputValue) {
+            parseAndAdd(inputValue);
+            setInputValue("");
+        }
+    };
+
+    const handlePaste = (e) => {
+        const text = e.clipboardData?.getData('text');
+        if (text && text.includes(',')) {
+            e.preventDefault();
+            parseAndAdd(text);
+            setInputValue("");
+        }
+    };
+
+    const removeAt = (idx) => {
+        const next = value.filter((_, i) => i !== idx);
+        onChange(next);
+    };
+
+    return (
+        <div {...props}>
+            {label && (
+                <div style={{ marginBottom: 6, fontSize: 12, color: '#6b7280' }}>{label}</div>
+            )}
+            <div
+                onClick={() => {
+                    const el = document.getElementById('listform-input');
+                    el && el.focus();
+                }}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 6,
+                    minHeight: 56,
+                    padding: '6px 8px',
+                    border: `1px solid ${error ? '#dc2626' : 'rgba(0,0,0,0.23)'}`,
+                    borderRadius: 4,
+                    cursor: 'text',
+                }}
+            >
+                {(value || []).map((item, idx) => (
+                    <Chip key={`${item}-${idx}`} label={item} onDelete={() => removeAt(idx)} size="small" />
+                ))}
+                <input
+                    id="listform-input"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleBlur}
+                    onPaste={handlePaste}
+                    placeholder={(!value || value.length === 0) ? placeholder : ''}
+                    style={{
+                        flex: 1,
+                        minWidth: 120,
+                        border: 'none',
+                        outline: 'none',
+                        font: 'inherit',
+                        padding: '6px 4px',
+                        background: 'transparent',
+                    }}
+                />
+            </div>
+            {helperText && (
+                <div style={{ marginTop: 4, fontSize: 12, color: error ? '#dc2626' : '#6b7280' }}>
+                    {helperText}
+                </div>
+            )}
+        </div>
     );
 };

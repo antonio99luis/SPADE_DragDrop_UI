@@ -123,7 +123,29 @@ const nextAgent = (baseData, nextAgentNum) => {
     class: `MyAgent${nextAgentNum}`,
     name: `agent${nextAgentNum}`,
     host: DEFAULTS.HOST,
+    kind: 'standard',
+    // BDI defaults
+    beliefs: [],
+    bdiProgram: '',
+    bdiFunctions: [],
     title: "Agent",
+  };
+};
+
+const nextAgentBDI = (baseData, nextAgentNum) => {
+  const a = nextAgent(baseData, nextAgentNum);
+  return {
+    ...a,
+    kind: 'bdi',
+  };
+};
+
+const nextAgentLLM = (baseData, nextAgentNum) => {
+  const a = nextAgent(baseData, nextAgentNum);
+  return {
+    ...a,
+    kind: 'llm',
+    llmPrompt: '',
   };
 };
 
@@ -173,6 +195,10 @@ export const createNodeData = (type, nodes, handleNodeDataChange, handleModalSta
     switch (type) {
       case NODE_TYPES.AGENT:
         return nextAgent(baseData, getNextAgentNumber(nodes));
+      case NODE_TYPES.AGENT_BDI:
+        return nextAgentBDI(baseData, getNextAgentNumber(nodes));
+      case NODE_TYPES.AGENT_LLM:
+        return nextAgentLLM(baseData, getNextAgentNumber(nodes));
       
       case NODE_TYPES.BEHAVIOUR:
         return nextBehaviour(baseData, getNextBehaviourNumber(nodes));

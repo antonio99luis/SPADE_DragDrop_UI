@@ -10,7 +10,28 @@ export const createNodeTypes = (handleModalStateChange) => ({
       {...props} 
       data={{
         ...props.data,
-        onModalStateChange: handleModalStateChange
+        onModalStateChange: handleModalStateChange,
+        kind: props.data?.kind || 'standard'
+      }}
+    />
+  ),
+  agentBDI: (props) => (
+    <AgentNode
+      {...props}
+      data={{
+        ...props.data,
+        onModalStateChange: handleModalStateChange,
+        kind: 'bdi'
+      }}
+    />
+  ),
+  agentLLM: (props) => (
+    <AgentNode
+      {...props}
+      data={{
+        ...props.data,
+        onModalStateChange: handleModalStateChange,
+        kind: 'llm'
       }}
     />
   ),
