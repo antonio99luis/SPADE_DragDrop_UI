@@ -1,5 +1,7 @@
 // src/config/nodeTypes.js
 import AgentNode from "../components/nodes/agent/AgentNode";
+import AgentNodeBDI from "../components/nodes/agent/AgentNodeBDI";
+import AgentNodeLLM from "../components/nodes/agent/AgentNodeLLM";
 import BehaviourNode from "../components/nodes/behaviour/BehaviourNode";
 import TemplateNode from "../components/nodes/template/TemplateNode";
 import StickyNoteNode from "../components/nodes/sticky-note/StickyNoteNode";
@@ -11,27 +13,25 @@ export const createNodeTypes = (handleModalStateChange) => ({
       data={{
         ...props.data,
         onModalStateChange: handleModalStateChange,
-        kind: props.data?.kind || 'standard'
+        kind: 'standard'
       }}
     />
   ),
   agentBDI: (props) => (
-    <AgentNode
+    <AgentNodeBDI
       {...props}
       data={{
         ...props.data,
         onModalStateChange: handleModalStateChange,
-        kind: 'bdi'
       }}
     />
   ),
   agentLLM: (props) => (
-    <AgentNode
+    <AgentNodeLLM
       {...props}
       data={{
         ...props.data,
         onModalStateChange: handleModalStateChange,
-        kind: 'llm'
       }}
     />
   ),

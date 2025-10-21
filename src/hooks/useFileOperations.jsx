@@ -2,15 +2,36 @@
 import { useCallback } from "react";
 import { generateSpadeCode } from "../utils/codeGenerator";
 import { DEFAULTS } from "../commons/constants";
+import JSZip from "jszip";
 
 export const useFileOperations = (nodes, edges, setNodes, setEdges, handleNodeDataChange, handleModalStateChange) => {
-  const handleGenerateSpade = useCallback(() => {
-    const finalCode = generateSpadeCode(nodes, edges);
-    const blob = new Blob([finalCode], { type: "text/x-python" });
-    const url = URL.createObjectURL(blob);
+  const handleGenerateSpade = useCallback(async () => {
+    const result = generateSpadeCode(nodes, edges);
+
+    // Always create a ZIP and download it (handles both object and legacy string outputs)
+    const zip = new JSZip();
+
+    if (typeof result === 'string') {
+      // Legacy path: single file content only
+      zip.file(DEFAULTS.GENERATED_FILE_NAME, result);
+    } else {
+      const { mainFileName, mainCode, extraFiles } = result || {};
+      // Add main file
+      zip.file(mainFileName || DEFAULTS.GENERATED_FILE_NAME, mainCode || '');
+      // Add extra files if any
+      (extraFiles || []).forEach((f) => {
+        const name = f?.name || "extra.txt";
+        const content = typeof f?.content === 'string' ? f.content : '';
+        zip.file(name, content);
+      });
+    }
+
+    // Generate and trigger download
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(zipBlob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = DEFAULTS.GENERATED_FILE_NAME;
+    a.download = "spade_project.zip";
     a.click();
     URL.revokeObjectURL(url);
   }, [nodes, edges]);

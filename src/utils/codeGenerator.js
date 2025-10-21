@@ -426,6 +426,6 @@ export const generateSpadeCode = (nodes, edges) => {
       }
     }
   });
-
+  
   return { mainFileName: 'spade_code.py', mainCode: finalCode, extraFiles };
 };
