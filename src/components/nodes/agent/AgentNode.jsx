@@ -1,6 +1,6 @@
 // src/components/nodes/agent/AgentNode.jsx
 import React, { useMemo } from "react";
-import md5 from 'blueimp-md5';
+import { buildAvatarUrl, validateMetadataKey } from '../../../utils/agentUtils';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
 import { TextFormField, NumberFormField, SwitchFormField, PasswordFormField } from '../../forms/FormField';
@@ -15,14 +15,13 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import KeyValueTable from '../../forms/KeyValueTable';
 import Chip from '@mui/material/Chip';
+import JidPreviewCard from './JidPreviewCard';
+import { useAgentGeneralFields } from '../../../hooks/useAgentGeneralFields';
+import { useAgentKnowledgeFields } from '../../../hooks/useAgentKnowledgeFields';
 
 import "./AgentNode.css";
 
-// Utility function
-const buildAvatarUrl = (jid) => {
-  const digest = md5(jid.trim().toLowerCase());
-  return `http://www.gravatar.com/avatar/${digest}?d=monsterid`;
-};
+// Utility moved to utils/agentUtils.js
 
 const AgentNode = ({ data, selected, id }) => {
   // Custom hook for modal data management
@@ -67,16 +66,7 @@ const AgentNode = ({ data, selected, id }) => {
     }
   };
 
-  // Validate metadata key
-  const validateMetadataKey = (key) => {
-    if (!key.trim()) {
-      return "Key cannot be empty";
-    }
-    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key.trim())) {
-      return "Key must be a valid identifier (letters, numbers, underscore)";
-    }
-    return null;
-  };
+  // Validator moved to utils/agentUtils.js
 
   // Handle metadata change
   const handleMetadataChange = (newMetadata) => {
@@ -106,7 +96,7 @@ const AgentNode = ({ data, selected, id }) => {
       }
     ];
     const kind = data.kind || AGENT_KIND.STANDARD;
-    const kindAttrs = agentKinds[kind]?.attributes?.(data) || [];
+    const kindAttrs = (agentKinds[kind]?.attributes?.(data) || []).filter(attr => attr.label !== 'Kind');
     memoData.push(...kindAttrs);
     return memoData;
   }, [data]);
@@ -114,6 +104,13 @@ const AgentNode = ({ data, selected, id }) => {
   // Check if valid
   const isValid = Object.keys(modalData.errors).length === 0;
   const kind = data.kind || AGENT_KIND.STANDARD;
+  const badge = agentKinds[kind]?.badge;
+  const kindLabel = badge?.label || null;
+  const baseTitle = data.title || AGENT_CONFIG.title;
+  const headerTitle = baseTitle;
+  const headerActions = badge ? (
+    <Chip size="small" label={badge.label} color={badge.color} variant="outlined" />
+  ) : null;
 
   // Shim to reuse kind-specific field renderers with live updates (no temp buffer)
   const exclusiveShim = React.useMemo(() => ({
@@ -123,21 +120,26 @@ const AgentNode = ({ data, selected, id }) => {
     },
   }), [data, id]);
 
+  // Presenter hooks for cleaner form props
+  const fields = useAgentGeneralFields(modalData);
+  const knowledge = useAgentKnowledgeFields(modalData);
+
   return (
     <>
       <BaseNode
         selected={selected}
         onDoubleClick={handleDoubleClick}
         icon={AGENT_CONFIG.icon}
-        title={data.title || AGENT_CONFIG.title}
+        title={headerTitle}
         attributes={attributes}
+        actionsRight={headerActions}
         handles={AGENT_CONFIG.handles}
         className="agent-node"
       >
         {/* Kind-exclusive settings button */}
         {kind !== AGENT_KIND.STANDARD && (
-          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button size="small" variant="outlined" onClick={() => setExclusiveOpen(true)}>
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
+            <Button size="medium" variant="outlined" onClick={() => setExclusiveOpen(true)}>
               {kind === AGENT_KIND.BDI ? 'BDI settings' : 'LLM settings'}
             </Button>
           </Box>
@@ -152,108 +154,19 @@ const AgentNode = ({ data, selected, id }) => {
           errors={modalData.errors}
           isValid={isValid}
         >
-          <TextFormField
-            label="Class Name"
-            value={modalData.getCurrentValue('class')}
-            onChange={(value) => modalData.handleTempChange('class', value)}
-            onBlur={() => modalData.handleBlur('class')}
-            placeholder="Python class name (e.g., MyAgent)"
-            required
-            error={modalData.hasError('class')}
-            helperText={modalData.getErrorMessage('class', "The Python class name for this agent")}
-          />
-
-          <TextFormField
-            label="Agent Name"
-            value={modalData.getCurrentValue('name')}
-            onChange={(value) => modalData.handleTempChange('name', value)}
-            onBlur={() => modalData.handleBlur('name')}
-            placeholder="Agent instance name (e.g., agent1)"
-            required
-            error={modalData.hasError('name')}
-            helperText={modalData.getErrorMessage('name', "The unique name for this agent instance")}
-          />
-
-          <TextFormField
-            label="Host"
-            value={modalData.getCurrentValue('host')}
-            onChange={(value) => modalData.handleTempChange('host', value)}
-            onBlur={() => modalData.handleBlur('host')}
-            placeholder="localhost"
-            required
-            error={modalData.hasError('host')}
-            helperText={modalData.getErrorMessage('host', "The host where this agent will run")}
-          />
-
-          <PasswordFormField
-            label="Password"
-            value={modalData.getCurrentValue('password')}
-            onChange={(value) => modalData.handleTempChange('password', value)}
-            onBlur={() => modalData.handleBlur('password')}
-            placeholder="password"
-            type="password"
-            required
-            error={modalData.hasError('password')}
-            helperText={modalData.getErrorMessage('password', "The password for this agent")}
-          />
-
-          <NumberFormField
-            label="Port"
-            value={modalData.getCurrentValue('port')}
-            onChange={(value) => modalData.handleTempChange('port', value)}
-            placeholder="5222"
-            helperText="The port number where this agent will run"
-          />
-
-          <SwitchFormField
-            label="Verify Security"
-            checked={modalData.getCurrentValue('verify_security')}
-            onChange={(checked) => modalData.handleTempChange('verify_security', checked)}
-          />
+          <TextFormField {...fields.classField} />
+          <TextFormField {...fields.nameField} />
+          <TextFormField {...fields.hostField} />
+          <PasswordFormField {...fields.passwordField} />
+          <NumberFormField {...fields.portField} />
+          <SwitchFormField {...fields.verifySecurityField} />
 
           {/* Kind-specific fields are shown only in the exclusive modal now */}
           {/* JID Preview */}
-          {modalData.getCurrentValue('name') && modalData.getCurrentValue('host') && (
-            <Card variant="outlined" sx={{ mt: 2 }}>
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    Agent JID Preview:
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      fontFamily: 'monospace',
-                      color: 'primary.main',
-                      fontSize: '16px'
-                    }}
-                  >
-                    {modalData.getCurrentValue('name')}@{modalData.getCurrentValue('host')}
-                  </Typography>
-                </Box>
-                <Avatar
-                  src={buildAvatarUrl(`${modalData.getCurrentValue('name')}@${modalData.getCurrentValue('host')}`)}
-                  alt="Agent Avatar"
-                  sx={{ width: 40, height: 40 }}
-                />
-              </CardContent>
-            </Card>
-          )}
+          <JidPreviewCard name={modalData.getCurrentValue('name')} host={modalData.getCurrentValue('host')} />
           {/* Metadata Section */}
           <Box sx={{ mt: 3 }}>
-            <KeyValueTable
-              data={modalData.getCurrentValue('metadata') || {}}
-              onChange={handleMetadataChange}
-              label="Knowledge"
-              keyLabel="Knowledge Key"
-              valueLabel="Knowledge Value"
-              keyPlaceholder="e.g., priority, category"
-              valuePlaceholder="e.g., high, notification"
-              addButtonText="Add Knowledge"
-              emptyMessage="No knowledge configured. Add knowledge to enhance your messages."
-              validateKey={validateMetadataKey}
-              maxHeight="250px"
-            />
+            <KeyValueTable {...knowledge} />
           </Box>
         </NodeConfigurationModal>
 
@@ -270,8 +183,8 @@ const AgentNode = ({ data, selected, id }) => {
             isValid={true}
           >
             {(() => {
-              const Extra = agentKinds[kind]?.extraFields;
-              return Extra ? <>{Extra({ modalData: exclusiveShim, id })}</> : null;
+              const Exclusive = agentKinds[kind]?.ExclusiveSettings;
+              return Exclusive ? <Exclusive modalData={exclusiveShim} id={id} /> : null;
             })()}
           </NodeConfigurationModal>
         )}

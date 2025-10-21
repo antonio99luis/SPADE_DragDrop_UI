@@ -17,16 +17,19 @@ export const generateSpadeCode = (nodes, edges) => {
     `        pass\n`;
 
   if (nodes.length === 0 && edges.length === 0) {
-    return baseTemplate;
+    return { mainFileName: 'spade_code.py', mainCode: baseTemplate, extraFiles: [] };
   }
 
   // Security checks
+  const isAgentType = (t) => t === "agent" || t === "agentBDI" || t === "agentLLM";
+  const getAgentKind = (n) => (n.type === 'agentBDI' ? 'bdi' : (n.type === 'agentLLM' ? 'llm' : 'standard'));
+
   const agentClassNames = nodes
-    .filter((n) => n.type === "agent")
+    .filter((n) => isAgentType(n.type))
     .map((n) => (n.data.class || "").trim())
     .filter(Boolean);
   const agentNames = nodes
-    .filter((n) => n.type === "agent")
+    .filter((n) => isAgentType(n.type))
     .map((n) => (n.data.name || "").trim())
     .filter(Boolean);
   const behaviourClassNames = nodes
@@ -122,6 +125,7 @@ export const generateSpadeCode = (nodes, edges) => {
   };
 
   const generateBehaviourCode = (behaviour) => {
+    console.log("Generating behaviour code for:", behaviour);
     const behType = behaviour.data.type;
     const behName = behaviour.data.class || `My${behType}`;
     const behCode = behaviour.data.configCode[behType] ||
@@ -152,9 +156,27 @@ export const generateSpadeCode = (nodes, edges) => {
     return { tempName, tempCode };
   };
   // UPDATED: Generate agent code with behavior constructor parameters
+  const indentBlock = (code, spaces = 4) => {
+    const pad = ' '.repeat(spaces);
+    return code
+      .split('\n')
+      .map((line) => (line.length ? pad + line : line))
+      .join('\n');
+  };
+
+  // Helper to sanitize attribute names for Python properties
+  const sanitizePropName = (raw) => {
+    const s = (raw || 'behaviour').toString();
+    return s
+      .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+      .replace(/[^a-zA-Z0-9_]/g, '_')
+      .toLowerCase();
+  };
+
   const generateAgentCode = (agent, friendsJids) => {
     const agentName = agent.data.name || "Agent";
     const auxClass = agent.data.class || "MyAgent";
+    const kind = getAgentKind(agent);
     let agentClass = `class ${auxClass}(Agent):\n`;
     agentClass += "    async def setup(self):\n";
 
@@ -178,6 +200,19 @@ export const generateSpadeCode = (nodes, edges) => {
         agentClass += `\n`;
       }
     }
+
+    // BDI-specific setup
+    if (kind === 'bdi') {
+      const beliefs = Array.isArray(agent.data.beliefs) ? agent.data.beliefs : [];
+      const beliefsPy = toPythonValue(beliefs);
+      agentClass += `        # BDI setup (beliefs available to your BDI program)\n`;
+      agentClass += `        try:\n`;
+      agentClass += `            self.bdi.set_beliefs(${beliefsPy})  # Requires BDI runtime binding\n`;
+      agentClass += `        except Exception:\n`;
+      agentClass += `            # Fallback: store beliefs on the agent instance\n`;
+      agentClass += `            self.beliefs = ${beliefsPy}\n`;
+      agentClass += `\n`;
+    }
     // User setup code
     const setupCode = agent.data.setupCode || "";
     if (setupCode) {
@@ -189,11 +224,17 @@ export const generateSpadeCode = (nodes, edges) => {
       agentClass += "        pass\n";
     }
 
+    // Inject optional user-defined functions (for BDI or general)
+    const functions = Array.isArray(agent.data.bdiFunctions) ? agent.data.bdiFunctions : [];
+    if (functions.length > 0) {
+      agentClass += "\n" + functions.map(fn => indentBlock(fn, 4)).join("\n\n") + "\n";
+    }
+
     return agentClass;
   };
 
   // Separate agents and behaviours
-  const agents = nodes.filter((n) => n.type === "agent");
+  const agents = nodes.filter((n) => isAgentType(n.type));
   const behaviours = nodes.filter((n) => n.type === "behaviour");
   const templates = nodes.filter((n) => n.type === "template");
 
@@ -354,10 +395,7 @@ export const generateSpadeCode = (nodes, edges) => {
       perAgentBehaviourBlocks.push(`    ${agentVar}.add_behaviour(${behVar})`);
       // Also expose behaviour as attribute on the agent instance for easy access
       const rawProp = (bNode?.data?.class || binfo.behName || 'behaviour');
-      const propName = rawProp
-        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-        .replace(/[^a-zA-Z0-9_]/g, '_')
-        .toLowerCase();
+      const propName = sanitizePropName(rawProp);
       perAgentBehaviourBlocks.push(`    ${agentVar}.${propName} = ${behVar}`);
     });
   });
@@ -373,6 +411,21 @@ export const generateSpadeCode = (nodes, edges) => {
   const waitUntilFinishedCode = agents.length > 0 ? `    await wait_until_finished([${agentNamesList}])` : "";
 
   // Combine all parts
+  // TODO: Consider splitting file generation into separate concerns: imports, classes, main, extras.
   const finalCode = `${imports}\n\n${behaviourCodeBlocks.join("\n\n")}\n\n${agentCodeBlocks.join("\n\n")}\n\nasync def main():\n${agentStartup}\n${waitUntilFinishedCode}\n\nif __name__ == "__main__":\n    spade.run(main())`;
-  return finalCode;
+
+  // Extra files: BDI .asl per BDI agent
+  const extraFiles = [];
+  agents.forEach((a) => {
+    const kind = getAgentKind(a);
+    if (kind === 'bdi') {
+      const program = (a.data.bdiProgram || '').trim();
+      const agentName = a.data.name || 'Agent';
+      if (program) {
+        extraFiles.push({ name: `${agentName}_BDI.asl`, content: program, type: 'text/plain' });
+      }
+    }
+  });
+
+  return { mainFileName: 'spade_code.py', mainCode: finalCode, extraFiles };
 };

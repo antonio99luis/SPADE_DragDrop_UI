@@ -24,7 +24,8 @@ const asChipCount = (count, singular = 'entry', plural = 'entries') => (
 export const agentKinds = {
   [AGENT_KIND.STANDARD]: {
     attributes: (data) => [],
-    extraFields: () => null,
+    badge: null,
+    ExclusiveSettings: () => null,
   },
 
   [AGENT_KIND.BDI]: {
@@ -35,7 +36,8 @@ export const agentKinds = {
         { label: 'Beliefs', value: asChipCount(beliefsCount) },
       ];
     },
-    extraFields: ({ modalData, id }) => (
+    badge: { label: 'BDI', color: 'primary' },
+    ExclusiveSettings: ({ modalData, id }) => (
       <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <ListFormField
           label="Beliefs"
@@ -68,7 +70,8 @@ export const agentKinds = {
     attributes: (data) => [
       { label: 'Kind', value: 'LLM' },
     ],
-    extraFields: ({ modalData }) => (
+    badge: { label: 'LLM', color: 'secondary' },
+    ExclusiveSettings: ({ modalData }) => (
       <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextAreaFormField
           label="LLM Prompt"

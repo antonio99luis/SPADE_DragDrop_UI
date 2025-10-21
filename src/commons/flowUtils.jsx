@@ -23,8 +23,27 @@ export function getNextNodeNumber(nodes, nodeType, classPrefix) {
   return 1;
 }
 
-export const getNextAgentNumber = (nodes) =>
-  getNextNodeNumber(nodes, NODE_TYPES.AGENT, "MyAgent");
+// Helper: consider all agent kinds uniformly
+export const isAgentType = (type) => (
+  type === NODE_TYPES.AGENT || type === NODE_TYPES.AGENT_BDI || type === NODE_TYPES.AGENT_LLM
+);
+
+// Next agent number across all agent kinds (standard, BDI, LLM)
+export const getNextAgentNumber = (nodes) => {
+  const usedNumbers = nodes
+    .filter((n) => isAgentType(n.type))
+    .map((n) => {
+      const match = (n.data.class || "").match(/^MyAgent(\d+)$/);
+      return match ? parseInt(match[1], 10) : null;
+    })
+    .filter((n) => n !== null)
+    .sort((a, b) => a - b);
+
+  for (let i = 1; i <= usedNumbers.length + 1; i++) {
+    if (!usedNumbers.includes(i)) return i;
+  }
+  return 1;
+};
 
 export const getNextBehaviourNumber = (nodes) =>
   getNextNodeNumber(nodes, NODE_TYPES.BEHAVIOUR, "MyBehaviour");
@@ -55,8 +74,8 @@ export const checkConnectionType = (nodes, edges, source, target, sourceHandle, 
 
   // Friendship: agent to agent
   if (
-    sourceNode.type === NODE_TYPES.AGENT &&
-    targetNode.type === NODE_TYPES.AGENT &&
+    isAgentType(sourceNode.type) &&
+    isAgentType(targetNode.type) &&
     sourceHandle === HANDLE_KEYS.FRIENDSHIP_SOURCE &&
     targetHandle === HANDLE_KEYS.FRIENDSHIP_TARGET &&
     source !== target
@@ -66,7 +85,7 @@ export const checkConnectionType = (nodes, edges, source, target, sourceHandle, 
   
   // AgentBehaviour: agent to behaviour
   if (
-    sourceNode.type === NODE_TYPES.AGENT &&
+    isAgentType(sourceNode.type) &&
     targetNode.type === NODE_TYPES.BEHAVIOUR &&
     sourceHandle === HANDLE_KEYS.BEHAVIOUR &&
     targetHandle === HANDLE_KEYS.BEHAVIOUR
@@ -76,8 +95,8 @@ export const checkConnectionType = (nodes, edges, source, target, sourceHandle, 
   
   // Inheritance: agent to agent (with uniqueness check)
   if (
-    sourceNode.type === NODE_TYPES.AGENT &&
-    targetNode.type === NODE_TYPES.AGENT &&
+    isAgentType(sourceNode.type) &&
+    isAgentType(targetNode.type) &&
     sourceHandle === HANDLE_KEYS.INHERITANCE_SOURCE &&
     targetHandle === HANDLE_KEYS.INHERITANCE_TARGET
   ) {

@@ -10,6 +10,8 @@ const BaseNode = ({
   onDoubleClick, 
   icon, 
   title, 
+  subtitle,
+  actionsRight,
   attributes = [], 
   handles = [], 
   children, 
@@ -21,7 +23,7 @@ const BaseNode = ({
       onDoubleClick={onDoubleClick}
       style={{ cursor: 'pointer' }}
     >
-      <NodeHeader image={icon} title={title} />
+  <NodeHeader image={icon} title={title} subtitle={subtitle} actionsRight={actionsRight} />
 
       <NodeDivider title="attributes" />
 
