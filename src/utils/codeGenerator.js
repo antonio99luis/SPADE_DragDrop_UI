@@ -177,7 +177,7 @@ export const generateSpadeCode = (nodes, edges) => {
     const agentName = agent.data.name || "Agent";
     const auxClass = agent.data.class || "MyAgent";
     const kind = getAgentKind(agent);
-    let agentClass = `class ${auxClass}(Agent):\n`;
+    let agentClass = `class ${auxClass}(${kind === 'bdi' ? 'BDIAgent' : 'Agent'}):\n`;
     agentClass += "    async def setup(self):\n";
 
     // Presence subscriptions
@@ -201,17 +201,36 @@ export const generateSpadeCode = (nodes, edges) => {
       }
     }
 
-    // BDI-specific setup
+    // BDI-specific setup: set beliefs individually via agent.bdi.set_belief(key[, value])
     if (kind === 'bdi') {
-      const beliefs = Array.isArray(agent.data.beliefs) ? agent.data.beliefs : [];
-      const beliefsPy = toPythonValue(beliefs);
-      agentClass += `        # BDI setup (beliefs available to your BDI program)\n`;
-      agentClass += `        try:\n`;
-      agentClass += `            self.bdi.set_beliefs(${beliefsPy})  # Requires BDI runtime binding\n`;
-      agentClass += `        except Exception:\n`;
-      agentClass += `            # Fallback: store beliefs on the agent instance\n`;
-      agentClass += `            self.beliefs = ${beliefsPy}\n`;
-      agentClass += `\n`;
+      // Build entries from beliefsObj if available; otherwise parse beliefs array of strings ("key" or "key:value")
+      let beliefEntries = [];
+      if (agent.data && agent.data.beliefsObj && typeof agent.data.beliefsObj === 'object') {
+        beliefEntries = Object.entries(agent.data.beliefsObj || {});
+      } else if (Array.isArray(agent.data?.beliefs)) {
+        beliefEntries = agent.data.beliefs.map((item) => {
+          if (typeof item !== 'string') return [String(item), ''];
+          const idx = item.indexOf(':');
+          if (idx > -1) {
+            return [item.slice(0, idx).trim(), item.slice(idx + 1).trim()];
+          }
+          return [item.trim(), ''];
+        });
+      }
+      if (beliefEntries.length > 0) {
+        agentClass += `        # BDI beliefs\n`;
+        beliefEntries.forEach(([k, v]) => {
+          const keyEsc = String(k || '').replace(/'/g, "\\'");
+          const hasVal = v !== undefined && v !== null && String(v).trim() !== '';
+          if (hasVal) {
+            const vPy = toPythonValue(v);
+            agentClass += `        self.bdi.set_belief('${keyEsc}', ${vPy})\n`;
+          } else {
+            agentClass += `        self.bdi.set_belief('${keyEsc}')\n`;
+          }
+        });
+        agentClass += `\n`;
+      }
     }
     // User setup code
     const setupCode = agent.data.setupCode || "";
@@ -312,8 +331,11 @@ export const generateSpadeCode = (nodes, edges) => {
     ? `from spade.behaviour import ${behaviourTypes.join(", ")}${usesFSM ? ", State" : ""}\n`
     : "";
 
-  // Import Agent if any agent node exists
-  const agentImport = agents.length > 0 ? "from spade.agent import Agent\n" : "";
+  // Import Agent only if non-BDI agents exist; import BDIAgent if BDI agents exist
+  const hasBDIAgents = agents.some((a) => getAgentKind(a) === 'bdi');
+  const hasNonBDIAgents = agents.some((a) => getAgentKind(a) !== 'bdi');
+  const agentImport = hasNonBDIAgents ? "from spade.agent import Agent\n" : "";
+  const bdiAgentImport = hasBDIAgents ? "from spade_bdi.bdi import BDIAgent\n" : "";
 
   // NEW: Check if we need datetime/timedelta import (absolute or relative start)
   const needsDatetime = behaviours.some(b => {
@@ -335,6 +357,7 @@ export const generateSpadeCode = (nodes, edges) => {
     `from spade import wait_until_finished\n` +
     `import asyncio\n` +
     `${agentImport}` +
+    `${bdiAgentImport}` +
     `${behaviourImports}` +
     `${templateImport}` +
     `${datetimeImport}`;
@@ -354,6 +377,11 @@ export const generateSpadeCode = (nodes, edges) => {
     const port = a.data.port ? parseInt(a.data.port, 10) : 5222;
     const verify_security = a.data.verify_security ? "True" : "False";
     const jid = getAgentJid(a);
+    const kind = getAgentKind(a);
+    if (kind === 'bdi') {
+      const aslFile = `${agentName}_BDI.asl`;
+      return `    ${agentName.toLowerCase()} = ${auxClass}('${jid}', '${agentPassword}', ${port}, ${verify_security}, "${aslFile}")`;
+    }
     return `    ${agentName.toLowerCase()} = ${auxClass}('${jid}', '${agentPassword}', ${port}, ${verify_security})`;
   });
 
@@ -414,16 +442,16 @@ export const generateSpadeCode = (nodes, edges) => {
   // TODO: Consider splitting file generation into separate concerns: imports, classes, main, extras.
   const finalCode = `${imports}\n\n${behaviourCodeBlocks.join("\n\n")}\n\n${agentCodeBlocks.join("\n\n")}\n\nasync def main():\n${agentStartup}\n${waitUntilFinishedCode}\n\nif __name__ == "__main__":\n    spade.run(main())`;
 
-  // Extra files: BDI .asl per BDI agent
+  // Extra files: Always emit BDI .asl per BDI agent (even if empty) so the constructor path exists
   const extraFiles = [];
   agents.forEach((a) => {
     const kind = getAgentKind(a);
     if (kind === 'bdi') {
-      const program = (a.data.bdiProgram || '').trim();
+      const raw = (a.data.bdiProgram || '');
+      const program = typeof raw === 'string' ? raw.trim() : '';
       const agentName = a.data.name || 'Agent';
-      if (program) {
-        extraFiles.push({ name: `${agentName}_BDI.asl`, content: program, type: 'text/plain' });
-      }
+      const content = program || '% empty BDI program\n';
+      extraFiles.push({ name: `${agentName}_BDI.asl`, content, type: 'text/plain' });
     }
   });
   

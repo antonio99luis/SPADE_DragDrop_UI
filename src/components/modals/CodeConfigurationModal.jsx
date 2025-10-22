@@ -23,6 +23,7 @@ const CodeConfigurationModal = ({
   editorOptions = {},
   buildCompletionProvider,
   customSyntax, // { id, monarch, conf, aliases }
+  defaultCode, // optional: when provided, Reset will also fill editor with this
 }) => {
   const completionDisposableRef = useRef(null);
 
@@ -136,7 +137,16 @@ const CodeConfigurationModal = ({
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-            <Button variant="outlined" onClick={onReset}>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                if (onReset) onReset();
+                // If a default code is provided, ensure the editor shows it even when current code is empty
+                if (defaultCode !== undefined && onChange) {
+                  onChange(defaultCode);
+                }
+              }}
+            >
               Reset Code
             </Button>
             <Button variant="outlined" onClick={onCancel}>

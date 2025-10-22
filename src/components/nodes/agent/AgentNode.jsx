@@ -6,7 +6,7 @@ import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
 import { TextFormField, NumberFormField, SwitchFormField, PasswordFormField } from '../../forms/FormField';
 import { useModalData } from '../../../hooks/useModalData';
 import { AGENT_CONFIG } from '../../../config/nodeConfigs';
-import { agentKinds, AGENT_KIND, AGENT_KIND_OPTIONS } from '../../../config/agentKinds';
+import { agentKinds, AGENT_KIND, AGENT_KIND_OPTIONS } from './agentKinds';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Avatar from '@mui/material/Avatar';

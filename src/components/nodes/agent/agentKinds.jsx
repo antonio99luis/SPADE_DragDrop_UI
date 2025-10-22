@@ -3,10 +3,10 @@ import React from 'react';
 import Chip from '@mui/material/Chip';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import { TextAreaFormField } from '../components/forms/FormField';
-import KeyValueTable from '../components/forms/KeyValueTable';
-import CodeConfigurationModal from '../components/modals/CodeConfigurationModal';
-import { aslMonarch } from '../editor/dsl/aslMonarch';
+import { TextAreaFormField } from '../../forms/FormField';
+import KeyValueTable from '../../forms/KeyValueTable';
+import CodeConfigurationModal from '../../modals/CodeConfigurationModal';
+import { aslMonarch } from '../../../editor/dsl/aslMonarch';
 
 export const AGENT_KIND = {
   STANDARD: 'standard',
@@ -46,8 +46,14 @@ export const agentKinds = {
     ExclusiveSettings: ({ modalData, id }) => {
       const [openAsl, setOpenAsl] = React.useState(false);
       const [openPy, setOpenPy] = React.useState(false);
-      const bdiProgram = modalData.getCurrentValue('bdiProgram') || '';
-      const bdiFunctionsCode = (modalData.getCurrentValue('bdiFunctions') || []).join('\n\n');
+      const DEFAULT_ASL = `!start.\n\n+!start <-\n    .my_function(4, R);\n    .my_action(R).`;
+      const DEFAULT_FUNC = `def add_custom_actions(self, actions):\n    @actions.add_function(".my_function", (int,))\n    def _my_function(x):\n        return x * x\n\n    @actions.add(".my_action", 1)\n    def _my_action(agent, term, intention):\n        print("hello action")\n        yield`;
+
+      const bdiProgram = modalData.getCurrentValue('bdiProgram') || DEFAULT_ASL;
+      const rawFns = modalData.getCurrentValue('bdiFunctions');
+      const bdiFunctionsCode = (Array.isArray(rawFns) && rawFns.length > 0)
+        ? rawFns.join('\n\n')
+        : DEFAULT_FUNC;
 
       // Helpers to keep backward compatibility: beliefs stored as array of strings
       const beliefsArrayToObject = (arr) => {
@@ -109,8 +115,9 @@ export const agentKinds = {
             open={openAsl}
             title="BDI Program (.asl)"
             code={bdiProgram}
+            defaultCode={DEFAULT_ASL}
             onChange={(val) => modalData.handleTempChange('bdiProgram', val || '')}
-            onReset={() => modalData.handleTempChange('bdiProgram', '')}
+            onReset={() => modalData.handleTempChange('bdiProgram', DEFAULT_ASL)}
             onCancel={() => setOpenAsl(false)}
             onSave={() => setOpenAsl(false)}
             language="asl"
@@ -123,8 +130,9 @@ export const agentKinds = {
             open={openPy}
             title="Agent Functions (Python)"
             code={bdiFunctionsCode}
+            defaultCode={DEFAULT_FUNC}
             onChange={(val) => modalData.handleTempChange('bdiFunctions', (val || '').split(/\n\n+/).map(s => s.trim()).filter(Boolean))}
-            onReset={() => modalData.handleTempChange('bdiFunctions', [])}
+            onReset={() => modalData.handleTempChange('bdiFunctions', [DEFAULT_FUNC])}
             onCancel={() => setOpenPy(false)}
             onSave={() => setOpenPy(false)}
             language="python"
