@@ -5,7 +5,7 @@ import behaviourSVG from "../assets/nodeSVG/behaviour.svg";
 import templateSVG from "../assets/nodeSVG/template.svg";
 import messageSVG from "../assets/nodeSVG/message.svg";
 export const AGENT_CONFIG = {
-  requiredFields: ['class', 'name', 'host', 'password'],
+  requiredFields: ['class', 'name', 'host'],
   icon: agentSVG,
   title: "Agent",
   subtitle: "Agent Configuration",

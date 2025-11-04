@@ -48,6 +48,8 @@ const AgentNode = ({ data, selected, id }) => {
   const handleDoubleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    // If exclusive kind modal (BDI/LLM) is open, disable opening general config
+    if (exclusiveOpen) return;
     modalData.openModal();
     handleModalStateChange(true);
   };

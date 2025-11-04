@@ -37,12 +37,9 @@ export function useAgentGeneralFields(modalData) {
       label: 'Password',
       value: modalData.getCurrentValue('password'),
       onChange: (v) => modalData.handleTempChange('password', v),
-      onBlur: () => modalData.handleBlur('password'),
       placeholder: 'password',
       type: 'password',
-      required: true,
-      error: modalData.hasError('password'),
-      helperText: modalData.getErrorMessage('password', 'The password for this agent'),
+      required: false,
     },
     portField: {
       label: 'Port',
