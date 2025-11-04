@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-11-04T12:02:26.366Z",
+  "nodes": [
+    {
+      "id": "agent-1762257563864",
+      "type": "agent",
+      "position": {
+        "x": 673.6245842277085,
+        "y": 82.5403366441239
+      },
+      "data": {
+        "class": "MyAgent1",
+        "name": "agent1",
+        "host": "localhost",
+        "kind": "standard",
+        "beliefs": [],
+        "bdiProgram": "",
+        "bdiFunctions": [],
+        "title": "Agent",
+        "verify_security": false,
+        "metadata": {
+          "asas": "as"
+        }
+      },
+      "measured": {
+        "width": 204,
+        "height": 387
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "behaviour-1762257578662",
+      "type": "behaviour",
+      "position": {
+        "x": 1180.828426771504,
+        "y": 245.35262875797815
+      },
+      "data": {
+        "class": "MyBehaviour1",
+        "type": "CyclicBehaviour",
+        "period": "",
+        "start_at": ""
+      },
+      "measured": {
+        "width": 224,
+        "height": 253
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "agentBDI-1762257663269",
+      "type": "agentBDI",
+      "position": {
+        "x": 390.99999999999983,
+        "y": -80.99999999999993
+      },
+      "data": {
+        "class": "MyAgent2",
+        "name": "agent2",
+        "host": "localhost",
+        "kind": "bdi",
+        "beliefs": [
+          "mi_belief:[as,asas]",
+          "aasa"
+        ],
+        "bdiProgram": "!start.\nasadsas\n+!start <-\n    .my_function(4, R);\n    .my_action(R).",
+        "bdiFunctions": [
+          "def add_custom_actions(self, actions):\n    @actions.add_function(\".my_function\", (int,))\n    def _my_function(x):\n        return x * x",
+          "@actions.add(\".my_action\", 1)\n    def _my_action(agent, term, intention):\n        print(\"hello action\")\n        asa\n        yield"
+        ],
+        "title": "Agent",
+        "beliefsObj": {
+          "mi_belief": "[as,asas]",
+          "aasa": ""
+        },
+        "bdiFunctionsText": "def add_custom_actions(self, actions):\n    @actions.add_function(\".my_function\", (int,))\n    def _my_function(x):\n        return x * x\n\n    @actions.add(\".my_action\", 1)\n    def _my_action(agent, term, intention):\n        print(\"hello action\")\n        asa\n        yield"
+      },
+      "measured": {
+        "width": 204,
+        "height": 456
+      },
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "agent-1762257563864",
+      "sourceHandle": "behaviour",
+      "target": "behaviour-1762257578662",
+      "targetHandle": "behaviour",
+      "type": "agentBehaviour",
+      "id": "xy-edge__agent-1762257563864behaviour-behaviour-1762257578662behaviour"
+    }
+  ]
+}

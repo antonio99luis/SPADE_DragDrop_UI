@@ -125,7 +125,7 @@ export const generateSpadeCode = (nodes, edges) => {
   };
 
   const generateBehaviourCode = (behaviour) => {
-    console.log("Generating behaviour code for:", behaviour);
+  // Generating behaviour code
     const behType = behaviour.data.type;
     const behName = behaviour.data.class || `My${behType}`;
     const behCode = behaviour.data.configCode[behType] ||
@@ -280,7 +280,7 @@ export const generateSpadeCode = (nodes, edges) => {
 
     const constructorParams = getBehaviourConstructorParams(b, templateName);
     behaviourInfo[b.id] = { behName, constructorParams };
-    console.log(behCode)
+  // Append behaviour code block
     behaviourCodeBlocks.push(behCode);
   });
 

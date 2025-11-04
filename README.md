@@ -2,6 +2,8 @@
 
 A visual drag-and-drop interface for orchestrating multiagent systems using ReactFlow. This application allows users to design agent architectures, define behaviors, and generate executable SPADE (Smart Python Agent Development Environment) code.
 
+> Documentación ampliada: consulta la guía de arquitectura y organización en `docs/architecture.md`.
+
 ## **📁 Project Structure**
 
 ```

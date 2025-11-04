@@ -1,0 +1,218 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-10-29T10:16:37.413Z",
+  "nodes": [
+    {
+      "id": "agentBDI-1761732206110",
+      "type": "agentBDI",
+      "position": {
+        "x": 373,
+        "y": 355
+      },
+      "data": {
+        "class": "CoordinatorAgentBDI",
+        "name": "coordinator",
+        "host": "localhost",
+        "kind": "bdi",
+        "beliefs": [
+          "60",
+          "task_params",
+          "PLA"
+        ],
+        "bdiProgram": "// Coordinator ASL: Orquesta Tuner -> Validator -> Save con un reintento\n\n// Al recibir los parámetros de tarea, iniciar coordinación con intento 0\n+task_params(D, M) <-\n    +attempt(0);\n    !coordinate(D, M, 0).\n\n// Si aún no hay predicción, pedir ajuste (tuning)\n+!coordinate(D, M, Attempt) : not predicted(_, _, _, _) <-\n    .print(\"BDI: solicitando predicción al Tuner...\");\n    py.tune(D, M).\n\n// Cuando tengamos predicción, pedir validación\n+predicted(V, H, TE, TC) : task_params(D, M) <-\n    .print(\"BDI: validando predicción...\");\n    py.validate(V, H, TE, TC).\n\n// Si validación es OK: guardar y terminar\n+validation_ok : task_params(D, M) & predicted(V, H, TE, TC) <-\n    .print(\"BDI: guardando parámetros válidos...\");\n    py.save(D, M, V, H, TE, TC);\n    -predicted(V, H, TE, TC).\n\n// Si validación falla y es el primer intento: reintentar con +10 en dureza\n+validation_failed(Reason) : task_params(D, M) & predicted(V, H, TE, TC) & attempt(0) <-\n    .print(\"BDI: validación fallida (primer intento). Reintentando con +10 de dureza...\");\n    py.tune_adjust(D, M, 10);\n    -predicted(V, H, TE, TC);\n    -validation_failed(Reason);\n    -attempt(0);\n    +attempt(1).\n\n// Si vuelve a fallar tras reintento: reportar fallo y finalizar\n+validation_failed(Reason) : attempt(1) <-\n    .print(\"BDI: validación fallida tras reintento: \");\n    .print(Reason).\n",
+        "bdiFunctions": [
+          "def add_custom_actions(self, actions):\n    \"\"\"Registra acciones Python invocables desde ASL.\"\"\"\n    # Mapear dureza de texto a valor numérico base\n    hardness_map = {\"baja\": 50, \"media\": 65, \"alta\": 80}\n    @actions.add(\"py.tune\", 2)\n    def _tune(agent, term, intention):\n        D = asp.grounded(term.args[0], intention.scope)\n        M = asp.grounded(term.args[1], intention.scope)\n        dureza_num = hardness_map.get(str(D).lower(), 60)\n        payload = {\"dureza\": dureza_num, \"material\": str(M)}\n        msg = Message(to=\"tuner@localhost\", body=json.dumps(payload), metadata={})\n        # Enviar asíncronamente usando el behaviour BDI para disponer de send()\n        self.submit(self.bdi.send(msg))\n        yield\n    @actions.add(\"py.tune_adjust\", 3)\n    def _tune_adjust(agent, term, intention):\n        D = asp.grounded(term.args[0], intention.scope)\n        M = asp.grounded(term.args[1], intention.scope)\n        delta = asp.grounded(term.args[2], intention.scope)\n        dureza_num = hardness_map.get(str(D).lower(), 60) + int(delta)\n        payload = {\"dureza\": dureza_num, \"material\": str(M)}\n        msg = Message(to=\"tuner@localhost\", body=json.dumps(payload), metadata={})\n        self.submit(self.bdi.send(msg))\n        yield\n    @actions.add(\"py.validate\", 4)\n    def _validate(agent, term, intention):\n        V = float(asp.grounded(term.args[0], intention.scope))\n        H = float(asp.grounded(term.args[1], intention.scope))\n        TE = float(asp.grounded(term.args[2], intention.scope))\n        TC = float(asp.grounded(term.args[3], intention.scope))\n        payload = [V, H, TE, TC]\n        msg = Message(to=\"validator@localhost\", body=json.dumps(payload), metadata={})\n        self.submit(self.bdi.send(msg))\n        yield\n    @actions.add(\"py.save\", 6)\n    def _save(agent, term, intention):\n        D = asp.grounded(term.args[0], intention.scope)\n        M = asp.grounded(term.args[1], intention.scope)\n        V = float(asp.grounded(term.args[2], intention.scope))\n        H = float(asp.grounded(term.args[3], intention.scope))\n        TE = float(asp.grounded(term.args[4], intention.scope))\n        TC = float(asp.grounded(term.args[5], intention.scope))\n        path = os.path.join(os.path.dirname(__file__), f\"tuning_result_bdi_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json\")\n        data = {\n            \"dureza\": str(D),\n            \"material\": str(M),\n            \"velocidad\": V,\n            \"altura_capa\": H,\n            \"temperatura_extrusor\": TE,\n            \"temperatura_cama\": TC,\n        }\n        with open(path, \"w\", encoding=\"utf-8\") as f:\n            json.dump(data, f, ensure_ascii=False, indent=2)\n        print(Fore.GREEN + Style.DIM + f\"TOOL-GUARDADO (BDI): Parámetros guardados en {path}\" + Style.RESET_ALL)\n        # Señalizar fin a la app\n        self.save_completed = True\n        self.last_save_path = path\n        yield"
+        ],
+        "title": "Coordinator",
+        "beliefsObj": {
+          "60": "",
+          "task_params": "",
+          "PLA": ""
+        },
+        "password": "pass"
+      },
+      "measured": {
+        "width": 204,
+        "height": 456
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "agent-1761732400419",
+      "type": "agent",
+      "position": {
+        "x": 1123.8369740782305,
+        "y": -172.3633452332252
+      },
+      "data": {
+        "class": "ValidatorAgent",
+        "name": "validator",
+        "host": "localhost",
+        "kind": "standard",
+        "beliefs": [],
+        "bdiProgram": "",
+        "bdiFunctions": [],
+        "title": "Validator",
+        "password": "pass"
+      },
+      "measured": {
+        "width": 204,
+        "height": 387
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "behaviour-1761732429106",
+      "type": "behaviour",
+      "position": {
+        "x": 791.3153972550546,
+        "y": 1014.6787424882799
+      },
+      "data": {
+        "class": "Receiver",
+        "type": "CyclicBehaviour",
+        "period": "",
+        "start_at": "",
+        "configCode": {
+          "CyclicBehaviour": "class Receiver(CyclicBehaviour):\n    async def run(self):\n        # Recibe respuestas de Tuner/Validator y las mapea a creencias BDI\n        msg = await self.receive(timeout=1)\n        if not msg:\n            return\n        try:\n            data = json.loads(msg.body)\n        except Exception:\n            return\n        # Tuner: lista de 4 valores -> predicted(V,H,TE,TC)\n        if isinstance(data, list) and len(data) == 4:\n            v, h, te, tc = data\n            self.agent.bdi.set_belief(\"predicted\", v, h, te, tc)\n        # Validator: dict con ok\n        elif isinstance(data, dict) and \"ok\" in data:\n            if data.get(\"ok\"):\n                self.agent.bdi.set_belief(\"validation_ok\")\n            else:\n                reasons = \", \".join(data.get(\"reasons\", [])[:3]) if data.get(\"reasons\") else data.get(\"error\", \"desconocido\")\n                self.agent.bdi.set_belief(\"validation_failed\", reasons)",
+          "OneShotBehaviour": "class MyBehaviour1(OneShotBehaviour):\n    async def on_start(self):\n        # Write your one-shot behaviour start code here\n        pass\n    async def run(self):\n        # Write your one-shot behaviour code here\n        pass\n    async def on_end(self):\n        # Write your one-shot behaviour end code here\n        pass\n",
+          "TimeoutBehaviour": "class MyBehaviour1(TimeoutBehaviour):\n    async def on_start(self):\n        # Write your timeout behaviour start code here\n        pass\n    async def run(self):\n        # Write your timeout behaviour code here\n        pass\n    async def on_end(self):\n        # Write your timeout behaviour end code here\n        pass\n",
+          "PeriodicBehaviour": "class MyBehaviour1(PeriodicBehaviour):\n    async def on_start(self):\n        # Write your periodic behaviour start code here\n        pass\n    async def run(self):\n        # Write your periodic behaviour code here\n        pass\n    async def on_end(self):\n        # Write your periodic behaviour end code here\n        pass\n",
+          "FSMBehaviour": "class MyBehaviour1(FSMBehaviour):\n    async def on_start(self):\n        # Write your FSM behaviour start code here\n        pass\n\n    async def on_end(self):\n        # Write your FSM behaviour end code here\n        pass\n\n    def __init__(self):\n        super().__init__()\n        STATE_ONE = \"STATE_ONE\"\n        STATE_TWO = \"STATE_TWO\"\n        STATE_THREE = \"STATE_THREE\"\n        # Define states *inside* the behaviour\n        class StateOne(State):\n            async def run(inner_self):\n                # Write your state one code here\n                pass\n\n        class StateTwo(State):\n            async def run(inner_self):\n                # Write your state two code here\n                pass\n\n        class StateThree(State):\n            async def run(inner_self):\n                # Write your state three code here\n\n                # No next state = final\n                pass\n\n        # Register states and transitions\n        self.add_state(name=STATE_ONE, state=StateOne(), initial=True)\n        self.add_state(name=STATE_TWO, state=StateTwo())\n        self.add_state(name=STATE_THREE, state=StateThree())\n\n        self.add_transition(source=STATE_ONE, dest=STATE_TWO)\n        self.add_transition(source=STATE_TWO, dest=STATE_THREE)\n"
+        },
+        "title": "Receiver"
+      },
+      "measured": {
+        "width": 224,
+        "height": 253
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "agent-1761732647724",
+      "type": "agent",
+      "position": {
+        "x": 1065.5956329701164,
+        "y": 479.75546111734593
+      },
+      "data": {
+        "class": "TunerAgent",
+        "name": "tuner",
+        "host": "localhost",
+        "kind": "standard",
+        "beliefs": [],
+        "bdiProgram": "",
+        "bdiFunctions": [],
+        "title": "TunerAgent",
+        "password": "pass"
+      },
+      "measured": {
+        "width": 204,
+        "height": 387
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "behaviour-1761732651519",
+      "type": "behaviour",
+      "position": {
+        "x": 1530.5668623192212,
+        "y": -18.68460274494535
+      },
+      "data": {
+        "class": "ValidateBehaviour",
+        "type": "CyclicBehaviour",
+        "period": "",
+        "start_at": "",
+        "configCode": {
+          "CyclicBehaviour": "class ValidateBehaviour(CyclicBehaviour):\n    async def run(self):\n        msg = await self.receive(timeout=30)\n        if not msg:\n            return\n        try:\n            data = json.loads(msg.body) if msg.body else {}\n            if isinstance(data, list) and len(data) == 4:\n                velocidad, altura_capa, temperatura_extrusor, temperatura_cama = data\n            else:\n                velocidad = data.get(\"velocidad\")\n                altura_capa = data.get(\"altura_capa\")\n                temperatura_extrusor = data.get(\"temperatura_extrusor\")\n                temperatura_cama = data.get(\"temperatura_cama\")\n            errores = []\n            if not (30 <= float(velocidad) <= 120): errores.append(\"velocidad fuera de rango [30,120] mm/s\")\n            if not (0.10 <= float(altura_capa) <= 0.30): errores.append(\"altura_capa fuera de rango [0.10,0.30] mm\")\n            if not (180 <= float(temperatura_extrusor) <= 240): errores.append(\"temperatura_extrusor fuera de rango [180,240] °C\")\n            if not (50 <= float(temperatura_cama) <= 70): errores.append(\"temperatura_cama fuera de rango [50,70] °C\")\n            result = {\"ok\": len(errores) == 0}\n            if errores:\n                result[\"reasons\"] = errores\n                result[\"expected\"] = {\n                    \"velocidad\": \"[30,120] mm/s\",\n                    \"altura_capa\": \"[0.10,0.30] mm\",\n                    \"temperatura_extrusor\": \"[180,240] °C\",\n                    \"temperatura_cama\": \"[50,70] °C\",\n                }\n                print(Fore.RED + f\"AGENTE VALIDADOR: {errores}\" + Style.RESET_ALL)\n            else:\n                print(Fore.GREEN + \"AGENTE VALIDADOR: Parámetros válidos\" + Style.RESET_ALL)\n            reply = msg.make_reply()\n            reply.body = json.dumps(result, ensure_ascii=False)\n            await self.send(reply)\n        except Exception as e:\n            reply = msg.make_reply()\n            reply.body = json.dumps({\"ok\": False, \"error\": str(e)}, ensure_ascii=False)\n            await self.send(reply)",
+          "OneShotBehaviour": "class MyBehaviour1(OneShotBehaviour):\n    async def on_start(self):\n        # Write your one-shot behaviour start code here\n        pass\n    async def run(self):\n        # Write your one-shot behaviour code here\n        pass\n    async def on_end(self):\n        # Write your one-shot behaviour end code here\n        pass\n",
+          "TimeoutBehaviour": "class MyBehaviour1(TimeoutBehaviour):\n    async def on_start(self):\n        # Write your timeout behaviour start code here\n        pass\n    async def run(self):\n        # Write your timeout behaviour code here\n        pass\n    async def on_end(self):\n        # Write your timeout behaviour end code here\n        pass\n",
+          "PeriodicBehaviour": "class MyBehaviour1(PeriodicBehaviour):\n    async def on_start(self):\n        # Write your periodic behaviour start code here\n        pass\n    async def run(self):\n        # Write your periodic behaviour code here\n        pass\n    async def on_end(self):\n        # Write your periodic behaviour end code here\n        pass\n",
+          "FSMBehaviour": "class MyBehaviour1(FSMBehaviour):\n    async def on_start(self):\n        # Write your FSM behaviour start code here\n        pass\n\n    async def on_end(self):\n        # Write your FSM behaviour end code here\n        pass\n\n    def __init__(self):\n        super().__init__()\n        STATE_ONE = \"STATE_ONE\"\n        STATE_TWO = \"STATE_TWO\"\n        STATE_THREE = \"STATE_THREE\"\n        # Define states *inside* the behaviour\n        class StateOne(State):\n            async def run(inner_self):\n                # Write your state one code here\n                pass\n\n        class StateTwo(State):\n            async def run(inner_self):\n                # Write your state two code here\n                pass\n\n        class StateThree(State):\n            async def run(inner_self):\n                # Write your state three code here\n\n                # No next state = final\n                pass\n\n        # Register states and transitions\n        self.add_state(name=STATE_ONE, state=StateOne(), initial=True)\n        self.add_state(name=STATE_TWO, state=StateTwo())\n        self.add_state(name=STATE_THREE, state=StateThree())\n\n        self.add_transition(source=STATE_ONE, dest=STATE_TWO)\n        self.add_transition(source=STATE_TWO, dest=STATE_THREE)\n"
+        },
+        "title": "ValidateBehaviour"
+      },
+      "measured": {
+        "width": 224,
+        "height": 253
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "behaviour-1761732802875",
+      "type": "behaviour",
+      "position": {
+        "x": 1506.4459241189568,
+        "y": 647.9813533051569
+      },
+      "data": {
+        "class": "PredictTuningBehaviour",
+        "type": "CyclicBehaviour",
+        "period": "",
+        "start_at": "",
+        "configCode": {
+          "CyclicBehaviour": "class PredictTuningBehaviour(CyclicBehaviour):\n    def predecir(self, dureza: float, material: str):\n        model = self.agent.bundle[\"model\"]\n        cols = self.agent.bundle[\"feature_columns\"]\n        hardness_col = self.agent.bundle[\"hardness_col\"]\n        mat_prefix = self.agent.bundle[\"material_prefix\"]\n        targets = self.agent.bundle[\"targets\"]\n        X = pd.DataFrame([[0] * len(cols)], columns=cols)\n        X.loc[0, hardness_col] = dureza\n        mat_col = f\"{mat_prefix}{material}\"\n        if mat_col in X.columns:\n            X.loc[0, mat_col] = 1\n        y_pred = model.predict(X)[0]\n        return {targets[i]: float(y_pred[i]) for i in range(len(targets))}\n    async def run(self):\n        msg = await self.receive(timeout=30)\n        if not msg:\n            return\n        try:\n            data = json.loads(msg.body) if msg.body else {}\n            _dureza = data.get(\"dureza\")\n            _material = data.get(\"material\")\n        except Exception:\n            _dureza = None\n            _material = None\n        valor_pred = self.predecir(_dureza, _material)\n        print(Fore.GREEN + f\"AGENTE PREDICTOR: valor_pred={valor_pred}\" + Style.RESET_ALL)\n        velocidad = int(valor_pred[\"print_speed\"]) \n        altura_capa = round(valor_pred[\"layer_height\"], 2)\n        temperatura_cama = int(valor_pred[\"bed_temperature\"]) \n        temperatura_extrusor = int(valor_pred[\"nozzle_temperature\"]) \n        if self.agent.ejecucion_count == 0 and SIMULAR_ERRORES_VALIDACION:\n            valores = [velocidad, altura_capa, 0, temperatura_cama]\n        else:\n            valores = [velocidad, altura_capa, temperatura_extrusor, temperatura_cama]\n        self.agent.ejecucion_count += 1\n        reply = msg.make_reply()\n        reply.body = json.dumps(valores, ensure_ascii=False)\n        await self.send(reply)",
+          "OneShotBehaviour": "class MyBehaviour1(OneShotBehaviour):\n    async def on_start(self):\n        # Write your one-shot behaviour start code here\n        pass\n    async def run(self):\n        # Write your one-shot behaviour code here\n        pass\n    async def on_end(self):\n        # Write your one-shot behaviour end code here\n        pass\n",
+          "TimeoutBehaviour": "class MyBehaviour1(TimeoutBehaviour):\n    async def on_start(self):\n        # Write your timeout behaviour start code here\n        pass\n    async def run(self):\n        # Write your timeout behaviour code here\n        pass\n    async def on_end(self):\n        # Write your timeout behaviour end code here\n        pass\n",
+          "PeriodicBehaviour": "class MyBehaviour1(PeriodicBehaviour):\n    async def on_start(self):\n        # Write your periodic behaviour start code here\n        pass\n    async def run(self):\n        # Write your periodic behaviour code here\n        pass\n    async def on_end(self):\n        # Write your periodic behaviour end code here\n        pass\n",
+          "FSMBehaviour": "class MyBehaviour1(FSMBehaviour):\n    async def on_start(self):\n        # Write your FSM behaviour start code here\n        pass\n\n    async def on_end(self):\n        # Write your FSM behaviour end code here\n        pass\n\n    def __init__(self):\n        super().__init__()\n        STATE_ONE = \"STATE_ONE\"\n        STATE_TWO = \"STATE_TWO\"\n        STATE_THREE = \"STATE_THREE\"\n        # Define states *inside* the behaviour\n        class StateOne(State):\n            async def run(inner_self):\n                # Write your state one code here\n                pass\n\n        class StateTwo(State):\n            async def run(inner_self):\n                # Write your state two code here\n                pass\n\n        class StateThree(State):\n            async def run(inner_self):\n                # Write your state three code here\n\n                # No next state = final\n                pass\n\n        # Register states and transitions\n        self.add_state(name=STATE_ONE, state=StateOne(), initial=True)\n        self.add_state(name=STATE_TWO, state=StateTwo())\n        self.add_state(name=STATE_THREE, state=StateThree())\n\n        self.add_transition(source=STATE_ONE, dest=STATE_TWO)\n        self.add_transition(source=STATE_TWO, dest=STATE_THREE)\n"
+        },
+        "title": "PredictTuningBehaviour"
+      },
+      "measured": {
+        "width": 224,
+        "height": 253
+      },
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "agentBDI-1761732206110",
+      "sourceHandle": "behaviour",
+      "target": "behaviour-1761732429106",
+      "targetHandle": "behaviour",
+      "type": "agentBehaviour",
+      "id": "xy-edge__agentBDI-1761732206110behaviour-behaviour-1761732429106behaviour"
+    },
+    {
+      "source": "agentBDI-1761732206110",
+      "sourceHandle": "friendship-source",
+      "target": "agent-1761732400419",
+      "targetHandle": "friendship-target",
+      "type": "friendship",
+      "id": "xy-edge__agentBDI-1761732206110friendship-source-agent-1761732400419friendship-target"
+    },
+    {
+      "source": "agent-1761732400419",
+      "sourceHandle": "behaviour",
+      "target": "behaviour-1761732651519",
+      "targetHandle": "behaviour",
+      "type": "agentBehaviour",
+      "id": "xy-edge__agent-1761732400419behaviour-behaviour-1761732651519behaviour"
+    },
+    {
+      "source": "agentBDI-1761732206110",
+      "sourceHandle": "friendship-source",
+      "target": "agent-1761732647724",
+      "targetHandle": "friendship-target",
+      "type": "friendship",
+      "id": "xy-edge__agentBDI-1761732206110friendship-source-agent-1761732647724friendship-target"
+    },
+    {
+      "source": "agent-1761732647724",
+      "sourceHandle": "behaviour",
+      "target": "behaviour-1761732802875",
+      "targetHandle": "behaviour",
+      "type": "agentBehaviour",
+      "id": "xy-edge__agent-1761732647724behaviour-behaviour-1761732802875behaviour"
+    }
+  ]
+}
