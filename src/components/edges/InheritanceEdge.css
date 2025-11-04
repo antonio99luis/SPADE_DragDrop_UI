@@ -17,6 +17,6 @@
 
 .inheritance-edge-label-text {
   paint-order: stroke;
-  stroke: #fff;
+  stroke: var(--edge-label-outline);
   stroke-width: 4px;
 }

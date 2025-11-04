@@ -1,9 +1,9 @@
 
 
 .agent-node {
-  border: 2px solid #bdbdbd;
+  border: 2px solid var(--node-border);
   border-radius: 8px;
-  background: #fff; 
+  background: var(--node-bg);
   width: 200px !important;   
   min-width: 180px;
 }

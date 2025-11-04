@@ -1,6 +1,8 @@
 {
   "version": "1.0",
   "timestamp": "2025-11-04T12:02:26.366Z",
+  "name": "Ejemplo simple",
+  "description": "Un flujo minimal con un agente estándar conectado a un comportamiento cíclico, más un agente BDI de muestra.",
   "nodes": [
     {
       "id": "agent-1762257563864",

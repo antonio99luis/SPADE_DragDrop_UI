@@ -144,6 +144,43 @@
   background: var(--secondary-color);
 }
 
+/* ===== Dark mode overrides driven by the app theme selector ===== */
+:root[data-ui-mode="dark"] .dropdown-node-menu {
+  background: #1f2937; /* slate-800 */
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  border: 1px solid #374151; /* slate-700 */
+}
+
+:root[data-ui-mode="dark"] .dropdown-node-menu-header {
+  border-bottom: 1px solid #374151;
+}
+
+:root[data-ui-mode="dark"] .dropdown-node-menu-content {
+  color: #e5e7eb; /* gray-200 */
+}
+
+:root[data-ui-mode="dark"] .dropdown-node-menu-title {
+  color: #e5e7eb; /* gray-200 */
+}
+
+:root[data-ui-mode="dark"] .dropdown-node-menu-search {
+  background: #111827; /* gray-900 */
+  border: 1px solid #4b5563; /* gray-600 */
+  color: #e5e7eb; /* gray-200 */
+}
+
+:root[data-ui-mode="dark"] .dropdown-node-menu-section-title {
+  color: #60a5fa; /* blue-400 */
+}
+
+:root[data-ui-mode="dark"] .dropdown-node-menu-empty {
+  color: #9ca3af; /* gray-400 */
+}
+
+:root[data-ui-mode="dark"] .dropdown-node-menu-buttons {
+  border-top: 1px solid #374151; /* slate-700 */
+}
+
 
 
 .dropdown-node-menu-buttons {

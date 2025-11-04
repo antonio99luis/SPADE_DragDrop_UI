@@ -53,7 +53,9 @@ root/
    │  ├─ agentUtils.js
    │  ├─ stringUtils.js
    │  └─ codegen/               # (WIP) espacio para builder/estrategias
-   ├─ FlowEditor.jsx / .css     # Lienzo principal y estilos
+   ├─ pages/
+   |   ├─ FlowEditor.jsx / .css     # Lienzo principal y estilos
+   |   └─ Home.jsx / # Página principal
    └─ main.jsx / index.css / theme.js
 
 Examples_SPADE/                # Ejemplos en Python para SPADE

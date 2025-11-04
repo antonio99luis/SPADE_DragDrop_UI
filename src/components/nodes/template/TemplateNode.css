@@ -1,8 +1,8 @@
 
 .template-node {
-  border: 2px solid #bdbdbd;
+  border: 2px solid var(--node-border);
   border-radius: 8px;
-  background: #fff; 
+  background: var(--node-bg); 
   width: 200px !important;    /* Adjust width as needed */
   min-width: 180px;
 }
@@ -21,7 +21,9 @@
   padding: 2px 6px;
   font-size: 14px;
   border-radius: 4px;
-  border: 1px solid;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-primary);
   margin-left: 4px;
 }
 

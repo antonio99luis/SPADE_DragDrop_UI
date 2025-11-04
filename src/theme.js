@@ -20,15 +20,20 @@ const getSecondaryColor = () => {
   return '#f50057'; // fallback for SSR
 };
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: getPrimaryColor(),
+export function getTheme(mode = 'light') {
+  return createTheme({
+    palette: {
+      mode,
+      primary: {
+        main: getPrimaryColor(),
+      },
+      secondary: {
+        main: getSecondaryColor(),
+      },
     },
-    secondary: {
-      main: getSecondaryColor(),
-    },
-  },
-});
+  });
+}
 
-export default theme;
+// Default theme (light) for backward compatibility
+const defaultTheme = getTheme('light');
+export default defaultTheme;

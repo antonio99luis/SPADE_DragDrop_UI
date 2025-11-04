@@ -1,7 +1,7 @@
 .node-header {
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--node-bg);
   width: 180px;
   padding-top: 6px;
   padding-bottom: 6px;
@@ -12,7 +12,7 @@
 .node-header-header {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--node-bg);
   gap: 6px;
 }
 
@@ -21,14 +21,14 @@
   height: 32px;
   margin-right: 10px;
   border-radius: 20%;
-  background: #fff;
+  background: var(--node-bg);
 }
 
 .node-header-title {
   font-size: 1.1em;
   font-weight: bold;
-  color: #333;
-  background: #fff;
+  color: var(--text-primary);
+  background: var(--node-bg);
 }
 
 .node-header-titles {
@@ -40,7 +40,7 @@
 
 .node-header-subtitle {
   font-size: 0.8em;
-  color: #666;
+  color: var(--text-muted);
   line-height: 1.2;
 }
 

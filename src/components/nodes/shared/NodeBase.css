@@ -1,9 +1,9 @@
 .base-node {
   display: flex;
   flex-direction: column;
-  border: 2px solid #bdbdbd;
+  border: 2px solid var(--node-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--node-bg);
   width: 170px;
   /*max-width: 350px;*/
   padding-top: 8px;
@@ -27,11 +27,11 @@
   height: 32px;
   margin-right: 10px;
   border-radius: 20%;
-  background: #fff;
+  background: var(--node-bg);
 }
 
 .base-node-title {
   font-size: 1.1em;
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
 }

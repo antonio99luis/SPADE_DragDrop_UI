@@ -1,6 +1,8 @@
 {
   "version": "1.0",
   "timestamp": "2025-10-29T10:16:37.413Z",
+  "name": "Coordinador BDI",
+  "description": "Orquestación BDI con un coordinador que solicita predicción, valida y guarda parámetros con reintentos controlados.",
   "nodes": [
     {
       "id": "agentBDI-1761732206110",

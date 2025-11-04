@@ -8,8 +8,8 @@
   height: auto;
   min-height: 80px;
   
-  background: #fff475;
-  border: 1.5px solid #e6c200;
+  background: var(--sticky-bg);
+  border: 1.5px solid var(--sticky-border);
   border-radius: 0px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   padding: 8px;
@@ -43,7 +43,7 @@
   border: none;
   resize: none;
   font-size: 1em;
-  color: #333;
+  color: #333; /* keep high contrast on sticky background across themes */
   outline: none;
   font-family: inherit;
   overflow: hidden;

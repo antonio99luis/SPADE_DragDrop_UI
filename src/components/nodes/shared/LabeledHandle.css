@@ -16,8 +16,8 @@
 .labeled-handle-label {
   margin: 0 6px;
   font-size: 0.85em;
-  color: #555;
-  background: #f5f5f5;
+  color: var(--text-muted);
+  background: var(--label-bg);
   border-radius: 4px;
   padding: 0px 6px;
   user-select: none;

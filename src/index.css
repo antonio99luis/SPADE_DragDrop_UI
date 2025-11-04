@@ -14,6 +14,29 @@
   -moz-osx-font-smoothing: grayscale;
   --primary-color: #ff9800;
   --secondary-color: #F26B38;
+  /* Node theming */
+  --node-bg: #ffffff;
+  --node-border: #bdbdbd;
+  /* Surfaces & text */
+  --surface-bg: #ffffff;
+  --surface-border: #e0e0e0;
+  --text-primary: #213547;
+  --text-muted: #666666;
+  /* Inputs */
+  --input-bg: #ffffff;
+  --input-border: #cccccc;
+  /* UI labels/dividers */
+  --label-bg: #f5f5f5;
+  --divider-bg: #f0f0f0;
+  --divider-border: #e0e0e0;
+  /* Edges */
+  --edge-default: #6f6b6e;
+  --edge-label-fill: #6f6b6e;
+  --edge-label-outline: #ffffff;
+  --edge-friend: #29bc5c;
+  /* Sticky note */
+  --sticky-bg: #fff475;
+  --sticky-border: #e6c200;
 
 }
 
@@ -21,6 +44,21 @@
   :root {
     color: #213547;
     background-color: #ffffff;
+    --node-bg: #ffffff;
+    --node-border: #bdbdbd;
+    --surface-bg: #ffffff;
+    --surface-border: #e0e0e0;
+    --text-primary: #213547;
+    --text-muted: #666666;
+    --input-bg: #ffffff;
+    --input-border: #cccccc;
+    --label-bg: #f5f5f5;
+    --divider-bg: #f0f0f0;
+    --divider-border: #e0e0e0;
+    --edge-default: #6f6b6e;
+    --edge-label-fill: #6f6b6e;
+    --edge-label-outline: #ffffff;
+    --edge-friend: #29bc5c;
   }
   a:hover {
     color: #747bff;
@@ -31,6 +69,24 @@
 }
 /* Dark mode styles for ReactFlow */
 @media (prefers-color-scheme: dark) {
+  :root {
+    /* bluish/gray backgrounds for nodes in dark mode */
+    --node-bg: #22303c; /* azul grisáceo suave */
+    --node-border: #3b4b5a;
+    --surface-bg: #111827; /* gray-900 */
+    --surface-border: #374151; /* slate-700 */
+    --text-primary: #e5e7eb; /* gray-200 */
+    --text-muted: #9ca3af; /* gray-400 */
+    --input-bg: #111827; /* gray-900 */
+    --input-border: #4b5563; /* gray-600 */
+    --label-bg: #1f2937; /* slate-800 */
+    --divider-bg: #1f2937; /* slate-800 */
+    --divider-border: #374151; /* slate-700 */
+    --edge-default: #666666;
+    --edge-label-fill: #9ca3af; /* gray-400 */
+    --edge-label-outline: #0b0f14; /* near-black for contrast */
+    --edge-friend: #29bc5c; /* keep accent consistent */
+  }
   /* Controls styling */
   .react-flow__controls {
     background: #1a1a1a !important;
@@ -109,6 +165,101 @@
   .react-flow__handle.react-flow__handle-valid {
     background: var(--primary-color) !important;
   }
+}
+
+/* Force UI mode via data attribute regardless of OS preference */
+:root[data-ui-mode="light"] {
+  --node-bg: #ffffff;
+  --node-border: #bdbdbd;
+  --surface-bg: #ffffff;
+  --surface-border: #e0e0e0;
+  --text-primary: #213547;
+  --text-muted: #666666;
+  --input-bg: #ffffff;
+  --input-border: #cccccc;
+  --label-bg: #f5f5f5;
+  --divider-bg: #f0f0f0;
+  --divider-border: #e0e0e0;
+  --edge-default: #6f6b6e;
+  --edge-label-fill: #6f6b6e;
+  --edge-label-outline: #ffffff;
+  --edge-friend: #29bc5c;
+}
+
+:root[data-ui-mode="dark"] {
+  --node-bg: #22303c;
+  --node-border: #3b4b5a;
+  --surface-bg: #111827;
+  --surface-border: #374151;
+  --text-primary: #e5e7eb;
+  --text-muted: #9ca3af;
+  --input-bg: #111827;
+  --input-border: #4b5563;
+  --label-bg: #1f2937;
+  --divider-bg: #1f2937;
+  --divider-border: #374151;
+  --edge-default: #666666;
+  --edge-label-fill: #9ca3af;
+  --edge-label-outline: #0b0f14;
+  --edge-friend: #29bc5c;
+}
+
+/* Force React Flow dark styles when UI mode = dark */
+:root[data-ui-mode="dark"] .react-flow__controls {
+  background: #1a1a1a !important;
+  border: 1px solid #444 !important;
+}
+:root[data-ui-mode="dark"] .react-flow__controls-button {
+  background: #2a2a2a !important;
+  border: none !important;
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+:root[data-ui-mode="dark"] .react-flow__controls-button:hover {
+  background: #3a3a3a !important;
+}
+:root[data-ui-mode="dark"] .react-flow__controls-button svg {
+  fill: #ffffff !important;
+}
+:root[data-ui-mode="dark"] .react-flow__minimap {
+  background: #1a1a1a !important;
+  border: 1px solid #444 !important;
+}
+:root[data-ui-mode="dark"] .react-flow__minimap-mask {
+  fill: rgba(255, 255, 255, 0.1) !important;
+}
+:root[data-ui-mode="dark"] .react-flow__minimap-node {
+  fill: #555 !important;
+  stroke: #777 !important;
+}
+:root[data-ui-mode="dark"] .react-flow__background {
+  background: #1a1a1a !important;
+}
+:root[data-ui-mode="dark"] .react-flow__background .react-flow__background-pattern {
+  color: #333 !important;
+}
+:root[data-ui-mode="dark"] .react-flow__selection {
+  background: rgba(255, 152, 0, 0.1) !important;
+  border: 1px solid var(--primary-color) !important;
+}
+:root[data-ui-mode="dark"] .react-flow__edge-path {
+  stroke: #666 !important;
+}
+:root[data-ui-mode="dark"] .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--primary-color) !important;
+}
+:root[data-ui-mode="dark"] .react-flow__node {
+  color: #ffffff;
+}
+:root[data-ui-mode="dark"] .react-flow__node.selected {
+  box-shadow: 0 0 0 2px var(--primary-color) !important;
+}
+:root[data-ui-mode="dark"] .react-flow__handle {
+  background: #666 !important;
+  border: 2px solid #888 !important;
+}
+:root[data-ui-mode="dark"] .react-flow__handle.react-flow__handle-valid {
+  background: var(--primary-color) !important;
 }
 /* DatePicker z-index overrides */
 .MuiPickersPopper-root,

@@ -1,5 +1,5 @@
 // src/components/modals/CodeConfigurationModal.jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -18,7 +18,7 @@ const CodeConfigurationModal = ({
   onReset,
   title = "Configure Behaviour Code",
   language = 'python',
-  theme = 'vs-light',
+  theme,
   helperText,
   editorOptions = {},
   buildCompletionProvider,
@@ -26,6 +26,35 @@ const CodeConfigurationModal = ({
   defaultCode, // optional: when provided, Reset will also fill editor with this
 }) => {
   const completionDisposableRef = useRef(null);
+  const [monacoTheme, setMonacoTheme] = useState(() => {
+    // Derive initial theme from the root data attribute; fallback to light
+    const mode = document.documentElement?.dataset?.uiMode || 'light';
+    return mode === 'dark' ? 'vs-dark' : 'light';
+  });
+
+  // Keep monaco theme in sync with global UI mode unless explicitly overridden via prop
+  useEffect(() => {
+    if (theme) {
+      setMonacoTheme(theme);
+      return; // respect explicit theme prop
+    }
+    const applyFromDom = () => {
+      const mode = document.documentElement?.dataset?.uiMode || 'light';
+      setMonacoTheme(mode === 'dark' ? 'vs-dark' : 'light');
+    };
+    const onModeChanged = () => applyFromDom();
+    const onStorage = (e) => {
+      if (e.key === 'ui-mode') applyFromDom();
+    };
+    window.addEventListener('ui-mode-changed', onModeChanged);
+    window.addEventListener('storage', onStorage);
+    // also run once in case of late updates
+    applyFromDom();
+    return () => {
+      window.removeEventListener('ui-mode-changed', onModeChanged);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [theme]);
 
 
   const handleEditorDidMount = (editor, monaco) => {
@@ -117,12 +146,12 @@ const CodeConfigurationModal = ({
 
           <Box sx={{
             height: 'calc(90% - 60px)',
-            border: '1px solid #ccc',
+            border: '1px solid var(--surface-border)',
             borderRadius: '4px'
           }}>
             <Editor
               language={language}
-              theme={theme}
+              theme={monacoTheme}
               value={code}
               onChange={onChange}
               onMount={handleEditorDidMount}

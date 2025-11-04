@@ -106,17 +106,6 @@ export default function NodeToolbar({
                 <BaseNode image={stickySVG} title={"Sticky Note"} />
               </div>
             </div>
-            <div className="dropdown-node-menu-buttons">
-              <button className="generate-spade-btn" onClick={onGenerateSpade}>
-                Generate SPADE code
-              </button>
-              <button className="save-load-btn save-btn" onClick={onSave}>
-                💾 Save Project
-              </button>
-              <button className="save-load-btn load-btn" onClick={onLoad}>
-                📁 Load Project
-              </button>
-            </div>
             <div className="dropdown-node-menu-section">
             </div>
           </div>

@@ -113,5 +113,33 @@ export const useFileOperations = (nodes, edges, setNodes, setEdges, handleNodeDa
     input.click();
   }, [nodes, edges, setNodes, setEdges, handleNodeDataChange, handleModalStateChange]);
 
-  return { handleGenerateSpade, handleSave, handleLoad };
+  // Carga directa a partir de un objeto JSON de proyecto (por ejemplo, desde la galería de ejemplos)
+  const loadProjectFromJson = useCallback((projectData, { confirmIfNotEmpty = false } = {}) => {
+    if (!projectData || !projectData.nodes || !projectData.edges) {
+      console.error('Invalid project data');
+      return false;
+    }
+
+    if (confirmIfNotEmpty && (nodes.length > 0 || edges.length > 0)) {
+      const confirmed = window.confirm(
+        'This will replace current canvas content. Continue?'
+      );
+      if (!confirmed) return false;
+    }
+
+    const restoredNodes = projectData.nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        onChange: handleNodeDataChange,
+        onModalStateChange: handleModalStateChange
+      }
+    }));
+
+    setNodes(restoredNodes);
+    setEdges(projectData.edges);
+    return true;
+  }, [nodes, edges, setNodes, setEdges, handleNodeDataChange, handleModalStateChange]);
+
+  return { handleGenerateSpade, handleSave, handleLoad, loadProjectFromJson };
 };
