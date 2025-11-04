@@ -50,10 +50,11 @@ export const agentKinds = {
       const DEFAULT_FUNC = `def add_custom_actions(self, actions):\n    @actions.add_function(".my_function", (int,))\n    def _my_function(x):\n        return x * x\n\n    @actions.add(".my_action", 1)\n    def _my_action(agent, term, intention):\n        print("hello action")\n        yield`;
 
       const bdiProgram = modalData.getCurrentValue('bdiProgram') || DEFAULT_ASL;
+      const bdiFunctionsText = modalData.getCurrentValue('bdiFunctionsText');
       const rawFns = modalData.getCurrentValue('bdiFunctions');
-      const bdiFunctionsCode = (Array.isArray(rawFns) && rawFns.length > 0)
-        ? rawFns.join('\n\n')
-        : DEFAULT_FUNC;
+      const bdiFunctionsCode = (typeof bdiFunctionsText === 'string' && bdiFunctionsText.length > 0)
+        ? bdiFunctionsText
+        : ((Array.isArray(rawFns) && rawFns.length > 0) ? rawFns.join('\n\n') : DEFAULT_FUNC);
 
       // Helpers to keep backward compatibility: beliefs stored as array of strings
       const beliefsArrayToObject = (arr) => {
@@ -73,8 +74,20 @@ export const agentKinds = {
         return obj;
       };
 
-      const beliefsObj = modalData.getCurrentValue('beliefsObj')
-        || beliefsArrayToObject(modalData.getCurrentValue('beliefs'));
+      // Initialize beliefsObj once from legacy beliefs if not present
+      React.useEffect(() => {
+        const existing = modalData.getCurrentValue('beliefsObj');
+        if (!existing || (typeof existing === 'object' && Object.keys(existing).length === 0)) {
+          const legacy = modalData.getCurrentValue('beliefs');
+          const obj = beliefsArrayToObject(legacy);
+          if (Object.keys(obj).length > 0) {
+            modalData.handleTempChange('beliefsObj', obj);
+          }
+        }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+
+      const beliefsObj = modalData.getCurrentValue('beliefsObj') || {};
 
       const handleBeliefsChange = (newMap) => {
         // Save map for UI
@@ -131,10 +144,15 @@ export const agentKinds = {
             title="Agent Functions (Python)"
             code={bdiFunctionsCode}
             defaultCode={DEFAULT_FUNC}
-            onChange={(val) => modalData.handleTempChange('bdiFunctions', (val || '').split(/\n\n+/).map(s => s.trim()).filter(Boolean))}
-            onReset={() => modalData.handleTempChange('bdiFunctions', [DEFAULT_FUNC])}
+            onChange={(val) => modalData.handleTempChange('bdiFunctionsText', val ?? '')}
+            onReset={() => modalData.handleTempChange('bdiFunctionsText', DEFAULT_FUNC)}
             onCancel={() => setOpenPy(false)}
-            onSave={() => setOpenPy(false)}
+            onSave={() => {
+              const text = modalData.getCurrentValue('bdiFunctionsText') ?? '';
+              const arr = (text || '').split(/\n\n+/).map(s => s.trim()).filter(Boolean);
+              modalData.handleTempChange('bdiFunctions', arr);
+              setOpenPy(false);
+            }}
             language="python"
             helperText="Define optional Python methods. Separate functions with a blank line."
           />

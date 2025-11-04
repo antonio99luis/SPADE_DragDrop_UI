@@ -25,7 +25,10 @@ export const useModalData = (initialData, requiredFields = []) => {
 
   // Get current value (temp data takes priority)
   const getCurrentValue = (field) => {
-    return tempData.hasOwnProperty(field) ? tempData[field] : (initialData[field] || '');
+    // Preserve falsy but valid values like false or 0; only fallback to '' when value is null/undefined
+    return Object.prototype.hasOwnProperty.call(tempData, field)
+      ? tempData[field]
+      : (initialData[field] ?? '');
   };
 
   // Validation
