@@ -37,6 +37,9 @@
   /* Sticky note */
   --sticky-bg: #fff475;
   --sticky-border: #e6c200;
+  --sticky-text: #333333;
+  /* Icon tint for external <img> SVGs */
+  --icon-filter: none;
 
 }
 
@@ -59,6 +62,10 @@
     --edge-label-fill: #6f6b6e;
     --edge-label-outline: #ffffff;
     --edge-friend: #29bc5c;
+    --sticky-bg: #fff475;
+    --sticky-border: #e6c200;
+    --sticky-text: #333333;
+    --icon-filter: none;
   }
   a:hover {
     color: #747bff;
@@ -86,6 +93,10 @@
     --edge-label-fill: #9ca3af; /* gray-400 */
     --edge-label-outline: #0b0f14; /* near-black for contrast */
     --edge-friend: #29bc5c; /* keep accent consistent */
+    --sticky-bg: #4a3d12; /* muted amber for dark mode */
+    --sticky-border: #a3831a;
+    --sticky-text: #f1f1e6;
+    --icon-filter: invert(1) brightness(1.2) saturate(0.8);
   }
   /* Controls styling */
   .react-flow__controls {
@@ -184,6 +195,10 @@
   --edge-label-fill: #6f6b6e;
   --edge-label-outline: #ffffff;
   --edge-friend: #29bc5c;
+  --sticky-bg: #fff475;
+  --sticky-border: #e6c200;
+  --sticky-text: #333333;
+  --icon-filter: none;
 }
 
 :root[data-ui-mode="dark"] {
@@ -202,6 +217,10 @@
   --edge-label-fill: #9ca3af;
   --edge-label-outline: #0b0f14;
   --edge-friend: #29bc5c;
+  --sticky-bg: #4a3d12;
+  --sticky-border: #a3831a;
+  --sticky-text: #f1f1e6;
+  --icon-filter: invert(1) brightness(1.2) saturate(0.8);
 }
 
 /* Force React Flow dark styles when UI mode = dark */
@@ -259,6 +278,64 @@
   border: 2px solid #888 !important;
 }
 :root[data-ui-mode="dark"] .react-flow__handle.react-flow__handle-valid {
+  background: var(--primary-color) !important;
+}
+
+/* Force React Flow light styles when UI mode = light (overrides OS dark) */
+:root[data-ui-mode="light"] .react-flow__controls {
+  background: #ffffff !important;
+  border: 1px solid #dddddd !important;
+}
+:root[data-ui-mode="light"] .react-flow__controls-button {
+  background: #f9f9f9 !important;
+  border: none !important;
+  color: #213547 !important;
+  fill: #213547 !important;
+}
+:root[data-ui-mode="light"] .react-flow__controls-button:hover {
+  background: #efefef !important;
+}
+:root[data-ui-mode="light"] .react-flow__controls-button svg {
+  fill: #213547 !important;
+}
+:root[data-ui-mode="light"] .react-flow__minimap {
+  background: #ffffff !important;
+  border: 1px solid #dddddd !important;
+}
+:root[data-ui-mode="light"] .react-flow__minimap-mask {
+  fill: rgba(0, 0, 0, 0.06) !important;
+}
+:root[data-ui-mode="light"] .react-flow__minimap-node {
+  fill: #999999 !important;
+  stroke: #bbbbbb !important;
+}
+:root[data-ui-mode="light"] .react-flow__background {
+  background: #ffffff !important;
+}
+:root[data-ui-mode="light"] .react-flow__background .react-flow__background-pattern {
+  color: #E2E8F0 !important;
+}
+:root[data-ui-mode="light"] .react-flow__selection {
+  background: rgba(255, 152, 0, 0.08) !important;
+  border: 1px solid var(--primary-color) !important;
+}
+:root[data-ui-mode="light"] .react-flow__edge-path {
+  stroke: #999999 !important;
+}
+:root[data-ui-mode="light"] .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--primary-color) !important;
+}
+:root[data-ui-mode="light"] .react-flow__node {
+  color: #213547;
+}
+:root[data-ui-mode="light"] .react-flow__node.selected {
+  box-shadow: 0 0 0 2px var(--primary-color) !important;
+}
+:root[data-ui-mode="light"] .react-flow__handle {
+  background: #dddddd !important;
+  border: 2px solid #cccccc !important;
+}
+:root[data-ui-mode="light"] .react-flow__handle.react-flow__handle-valid {
   background: var(--primary-color) !important;
 }
 /* DatePicker z-index overrides */

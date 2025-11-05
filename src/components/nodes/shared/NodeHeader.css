@@ -21,7 +21,25 @@
   height: 32px;
   margin-right: 10px;
   border-radius: 20%;
-  background: var(--node-bg);
+  background: transparent;
+  filter: var(--icon-filter);
+}
+
+.node-header-svg {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 20%;
+  background: transparent;
+  color: var(--text-primary);
+}
+.node-header-svg svg,
+.node-header-svg path,
+.node-header-svg g {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
 }
 
 .node-header-title {

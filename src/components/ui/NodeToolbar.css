@@ -104,8 +104,8 @@
 }
 
 .dropdown-node-menu-draggable-sticky .base-node {
-  background: #fff475; 
-  border-color: #e6c200; 
+  background: var(--sticky-bg); 
+  border-color: var(--sticky-border); 
 }
 
 .dropdown-node-menu-draggable-sticky .base-node:hover {
@@ -117,7 +117,11 @@
   height: 32px;
   margin-right: 10px;
   border-radius: 20%;
-  background: #fff475;
+  background: transparent;
+}
+
+.dropdown-node-menu .base-node-svg {
+  color: var(--text-primary);
 }
 
 .dropdown-node-menu-empty {

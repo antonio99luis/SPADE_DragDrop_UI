@@ -20,7 +20,7 @@
 }
 
 .sticky-note-node-selected {
-  box-shadow: 0 0 0 1px #f2be6f;
+  box-shadow: 0 0 0 1px var(--sticky-border);
   border: 2px solid var(--primary-color);
 }
 
@@ -43,7 +43,7 @@
   border: none;
   resize: none;
   font-size: 1em;
-  color: #333; /* keep high contrast on sticky background across themes */
+  color: var(--sticky-text);
   outline: none;
   font-family: inherit;
   overflow: hidden;

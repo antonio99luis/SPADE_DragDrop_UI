@@ -36,6 +36,8 @@ export default function FlowEditor() {
   const reactFlowWrapper = useRef(null);
   const [searchParams] = useSearchParams();
   const [initialized, setInitialized] = useState(false);
+  // Track UI mode to theme the canvas explicitly
+  const [uiMode, setUiMode] = useState(() => document.documentElement?.dataset?.uiMode || 'light');
   const navigate = useNavigate();
   const [flowName, setFlowName] = useState("");
   const [flowDescription, setFlowDescription] = useState("");
@@ -112,6 +114,25 @@ export default function FlowEditor() {
       })();
     }
   }, [searchParams, initialized, loadProjectFromJson]);
+
+  // Sync uiMode with global theme selector
+  useEffect(() => {
+    const applyFromDom = () => {
+      const mode = document.documentElement?.dataset?.uiMode || 'light';
+      setUiMode(mode);
+    };
+    const handleModeChanged = () => applyFromDom();
+    const handleStorage = (e) => {
+      if (e.key === 'ui.mode') applyFromDom();
+    };
+    window.addEventListener('ui-mode-changed', handleModeChanged);
+    window.addEventListener('storage', handleStorage);
+    applyFromDom();
+    return () => {
+      window.removeEventListener('ui-mode-changed', handleModeChanged);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   const saveWithMeta = () => {
     const fileName = flowName && flowName.trim().length > 0 ? flowName.trim() : undefined;
@@ -194,7 +215,7 @@ export default function FlowEditor() {
 
           <div
             ref={reactFlowWrapper}
-            style={{ flex: 1, height: "100%" }}
+            style={{ flex: 1, height: "100%", background: 'var(--surface-bg)' }}
             onDrop={onDrop}
             onDragOver={onDragOver}
           >
@@ -213,7 +234,12 @@ export default function FlowEditor() {
             >
               <Controls />
               <MiniMap />
-              <Background variant="dots" gap={12} size={1} />
+              <Background
+                variant="dots"
+                gap={12}
+                size={1}
+                color={uiMode === 'dark' ? '#333333' : '#E2E8F0'}
+              />
             </ReactFlow>
           </div>
         </div>

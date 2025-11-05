@@ -9,7 +9,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { getTheme } from './theme'
 
 function AppRoot() {
-  const [mode, setMode] = useState(() => localStorage.getItem('ui.mode') || 'light');
+  const [mode, setMode] = useState(() => {
+    // Prefer stored mode, else any pre-set data attribute, else OS preference
+    const stored = localStorage.getItem('ui.mode');
+    if (stored) return stored;
+    const preset = document.documentElement?.dataset?.uiMode;
+    if (preset === 'light' || preset === 'dark') return preset;
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
+  });
 
   useEffect(() => {
     const onStorage = (e) => {
@@ -32,6 +40,8 @@ function AppRoot() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-ui-mode', mode);
+    // Persist to localStorage to keep sources in sync
+    try { localStorage.setItem('ui.mode', mode); } catch {}
   }, [mode]);
 
   const theme = useMemo(() => getTheme(mode), [mode]);
@@ -50,7 +60,7 @@ function AppRoot() {
 }
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  //<StrictMode>
     <AppRoot />
-  </StrictMode>,
+  //</StrictMode>,
 )

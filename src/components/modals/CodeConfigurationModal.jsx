@@ -44,7 +44,7 @@ const CodeConfigurationModal = ({
     };
     const onModeChanged = () => applyFromDom();
     const onStorage = (e) => {
-      if (e.key === 'ui-mode') applyFromDom();
+      if (e.key === 'ui.mode') applyFromDom();
     };
     window.addEventListener('ui-mode-changed', onModeChanged);
     window.addEventListener('storage', onStorage);

@@ -126,7 +126,7 @@ export default function Home() {
 
         {/* Content */}
         <Box sx={{ p: 3, flex: 1, maxWidth: 1400, width: '100%', mx: 'auto' }}>
-          <Typography variant="h5" sx={{ mb: 2 }}>Galería de ejemplos</Typography>
+          <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>Galería de ejemplos</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Selecciona un flujo de ejemplo para abrirlo en el editor, o crea uno nuevo.
           </Typography>

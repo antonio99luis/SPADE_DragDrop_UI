@@ -27,11 +27,28 @@
   height: 32px;
   margin-right: 10px;
   border-radius: 20%;
-  background: var(--node-bg);
+  background: transparent;
 }
 
 .base-node-title {
   font-size: 1.1em;
   font-weight: bold;
   color: var(--text-primary);
+}
+
+.base-node-svg {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+  border-radius: 20%;
+  background: transparent;
+  color: var(--text-primary);
+}
+.base-node-svg svg,
+.base-node-svg path,
+.base-node-svg g {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
 }
