@@ -88,7 +88,7 @@ src/
 
 ### **🎨 UI Components** (`/components/ui/`)
 
-- **`NodeToolbar.jsx`** - Main toolbar for node creation and project management
+- **`NodeToolBar.jsx`** - Main toolbar for node creation and project management
   - Draggable node palette (Agent, Behavior, Template, Sticky Note)
   - SPADE code generation functionality
   - Project save/load capabilities

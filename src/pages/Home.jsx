@@ -22,18 +22,19 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import TranslateIcon from '@mui/icons-material/Translate';
 import { listExamples } from '../services/examplesService';
+import { useI18n } from '../i18n/I18nProvider';
 // Preview eliminada por petición: mostramos solo nombre/descr.
  
 const REPO_URL = import.meta.env.VITE_REPO_URL || 'https://github.com/your-org/SPADE_DragDrop_UI'; // Configurable por env
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t, lang, setLanguage } = useI18n();
   const [examples, setExamples] = useState([]);
   const [loading, setLoading] = useState(true);
   const CARD_HEIGHT = 220;
   const CARD_WIDTH = 280; // ancho de tarjeta (reservado para futuros ajustes de layout)
   const [mode, setMode] = useState(() => localStorage.getItem('ui.mode') || 'light');
-  const [language, setLanguage] = useState(() => localStorage.getItem('ui.lang') || 'es');
   const [optionsAnchor, setOptionsAnchor] = useState(null);
   const optionsOpen = Boolean(optionsAnchor);
 
@@ -65,25 +66,21 @@ export default function Home() {
     localStorage.setItem('ui.mode', m);
     handleCloseOptions();
   };
-  const handleSetLanguage = (l) => {
-    setLanguage(l);
-    localStorage.setItem('ui.lang', l);
-    handleCloseOptions();
-  };
+  const handleSetLanguage = (l) => { setLanguage(l); handleCloseOptions(); };
 
   return (
       <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
         {/* Top AppBar */}
         <AppBar position="static" color="primary" elevation={1}>
           <Toolbar>
-            <Typography variant="h6" component="div" sx={{ ml: 0 }}>
-              SPADE Drag & Drop
+            <Typography variant="h4" component="div" sx={{ ml: 0 }}>
+              SPADE & drop
             </Typography>
 
             <Box sx={{ flexGrow: 1 }} />
 
             {/* Options button */}
-            <Tooltip title="Opciones">
+            <Tooltip title={t('home.optionsTooltip')}>
               <IconButton color="inherit" onClick={handleOpenOptions} aria-label="options">
                 <SettingsIcon />
               </IconButton>
@@ -92,31 +89,31 @@ export default function Home() {
               <MenuItem disabled>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <DarkModeIcon fontSize="small" />
-                  <Typography variant="subtitle2">Tema</Typography>
+                  <Typography variant="subtitle2">{t('options.theme')}</Typography>
                 </Box>
               </MenuItem>
               <MenuItem selected={mode === 'light'} onClick={() => { handleSetMode('light'); window.dispatchEvent(new CustomEvent('ui-mode-changed', { detail: { mode: 'light' } })); }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <LightModeIcon fontSize="small" /> Claro
+                  <LightModeIcon fontSize="small" /> {t('options.light')}
                 </Box>
               </MenuItem>
               <MenuItem selected={mode === 'dark'} onClick={() => { handleSetMode('dark'); window.dispatchEvent(new CustomEvent('ui-mode-changed', { detail: { mode: 'dark' } })); }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <DarkModeIcon fontSize="small" /> Oscuro
+                  <DarkModeIcon fontSize="small" /> {t('options.dark')}
                 </Box>
               </MenuItem>
               <Divider sx={{ my: 1 }} />
               <MenuItem disabled>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <TranslateIcon fontSize="small" />
-                  <Typography variant="subtitle2">Idioma</Typography>
+                  <Typography variant="subtitle2">{t('options.language')}</Typography>
                 </Box>
               </MenuItem>
-              <MenuItem selected={language === 'es'} onClick={() => handleSetLanguage('es')}>Español (ES)</MenuItem>
-              <MenuItem selected={language === 'en'} onClick={() => handleSetLanguage('en')}>English (EN)</MenuItem>
+              <MenuItem selected={lang === 'es'} onClick={() => handleSetLanguage('es')}>Español (ES)</MenuItem>
+              <MenuItem selected={lang === 'en'} onClick={() => handleSetLanguage('en')}>English (EN)</MenuItem>
             </Menu>
 
-            <Tooltip title="Repositorio en GitHub">
+            <Tooltip title={t('home.repoTooltip')}>
               <IconButton color="inherit" component="a" href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
                 <GitHubIcon />
               </IconButton>
@@ -126,9 +123,9 @@ export default function Home() {
 
         {/* Content */}
         <Box sx={{ p: 3, flex: 1, maxWidth: 1400, width: '100%', mx: 'auto' }}>
-          <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>Galería de ejemplos</Typography>
+          <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>{t('home.examplesGalleryTitle')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Selecciona un flujo de ejemplo para abrirlo en el editor, o crea uno nuevo.
+            {t('home.examplesGalleryHelp')}
           </Typography>
 
           <Grid container spacing={2} columns={{ xs: 2, sm: 8, md: 12 }}>
@@ -138,7 +135,7 @@ export default function Home() {
                 <CardActionArea onClick={handleCreateNew} sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
                     <AddCircleOutlineIcon sx={{ fontSize: 48 }} />
-                    <Typography variant="subtitle1" sx={{ mt: 1 }}>Nuevo flujo</Typography>
+                    <Typography variant="subtitle1" sx={{ mt: 1 }}>{t('home.newFlow')}</Typography>
                   </Box>
                 </CardActionArea>
               </Card>
@@ -149,7 +146,7 @@ export default function Home() {
               <Grid xs={2} sm={4} md={3} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Card variant="outlined" sx={{ height: CARD_HEIGHT, width: CARD_WIDTH, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <CardContent>
-                    <Typography variant="body2" color="text.secondary">Cargando ejemplos…</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('home.loadingExamples')}</Typography>
                   </CardContent>
                 </Card>
               </Grid>
@@ -157,7 +154,7 @@ export default function Home() {
               <Grid xs={2} sm={8} md={9} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Card variant="outlined" sx={{ height: CARD_HEIGHT, width: CARD_WIDTH, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <CardContent>
-                    <Typography variant="body2" color="text.secondary">No hay ejemplos disponibles.</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('home.noExamples')}</Typography>
                   </CardContent>
                 </Card>
               </Grid>

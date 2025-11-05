@@ -196,29 +196,3 @@
   border-top: 1px solid #eee;
 }
 
-.save-load-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.95em;
-  transition: background 0.2s;
-}
-
-.save-btn {
-  background: #4CAF50;
-  color: white;
-}
-
-.save-btn:hover {
-  background: #45a049;
-}
-
-.load-btn {
-  background: #2196F3;
-  color: white;
-}
-
-.load-btn:hover {
-  background: #1976D2;
-}

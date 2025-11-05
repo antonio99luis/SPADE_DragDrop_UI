@@ -4,8 +4,10 @@ import NodeHeader from './shared/NodeHeader';
 import NodeDivider from './shared/NodeDivider';
 import { LabeledHandle } from './shared/LabeledHandle';
 import Typography from '@mui/material/Typography';
+import { useI18n } from '../../i18n/I18nProvider';
 
-const BaseNode = ({ 
+
+  const BaseNode = ({ 
   selected, 
   onDoubleClick, 
   icon, 
@@ -17,6 +19,8 @@ const BaseNode = ({
   children, 
   className = "base-node" 
 }) => {
+  const { t } = useI18n();
+
   return (
     <div
       className={`${className}${selected ? ` ${className}-selected` : ''}`}
@@ -25,7 +29,7 @@ const BaseNode = ({
     >
   <NodeHeader image={icon} title={title} subtitle={subtitle} actionsRight={actionsRight} />
 
-      <NodeDivider title="attributes" />
+      <NodeDivider title={t('nodeProperties.attributes')} />
 
       <div className={`${className}-attributes`}>
         {attributes.map(({ label, value }, index) => (
@@ -41,18 +45,26 @@ const BaseNode = ({
         <>
           {handles.some(h => h.type === 'target') && (
             <>
-              <NodeDivider title="inputs" />
+              <NodeDivider title={t('nodeProperties.inputs')} />
               {handles.filter(h => h.type === 'target').map(handle => (
-                <LabeledHandle key={handle.id} {...handle} />
+                <LabeledHandle
+                  key={handle.id}
+                  {...handle}
+                  title={handle.titleKey ? t(handle.titleKey, handle.title) : handle.title}
+                />
               ))}
             </>
           )}
           
           {handles.some(h => h.type === 'source') && (
             <>
-              <NodeDivider title="outputs" />
+              <NodeDivider title={t('nodeProperties.outputs')} />
               {handles.filter(h => h.type === 'source').map(handle => (
-                <LabeledHandle key={handle.id} {...handle} />
+                <LabeledHandle
+                  key={handle.id}
+                  {...handle}
+                  title={handle.titleKey ? t(handle.titleKey, handle.title) : handle.title}
+                />
               ))}
             </>
           )}

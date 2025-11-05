@@ -1,5 +1,5 @@
 // src/components/nodes/behaviour/BehaviourNode.jsx
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import BaseNode from '../BaseNode';
 import NodeConfigurationModal from '../../modals/NodeConfigurationModal';
 import CodeConfigurationModal from '../../modals/CodeConfigurationModal';
@@ -14,12 +14,24 @@ import { BEHAVIOUR_CONFIG, BEHAVIOUR_TYPES } from '../../../config/nodeConfigs';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import './BehaviourNode.css';
+import { useI18n } from '../../../i18n/I18nProvider';
+
 
 const BehaviourNode = ({ data, selected, id }) => {
+  const { t } = useI18n();
   // Custom hook for modal data management with behaviour-specific logic
   const modalData = useBehaviourModalData(data, BEHAVIOUR_CONFIG.requiredFields);
   const [connectedNodes, setConnectedNodes] = React.useState([]);
-  const [tempConfigCode, setTempConfigCode] = React.useState({});
+  const [tempConfigCode, setTempConfigCode] = React.useState([]);
+  // Ensure the node's data gets an initialized configCode on first render
+  useEffect(() => {
+    if ((!data.configCode || typeof data.configCode !== 'object') && typeof data.onChange === 'function') {
+      const cfg = modalData.getCurrentValue('configCode');
+      if (cfg && typeof cfg === 'object') {
+        data.onChange(id, 'configCode', cfg);
+      }
+    }
+  }, [data.configCode, data.onChange, id, modalData]);
   // Handle save changes
   const handleSaveChanges = (tempData) => {
     if (data.onChange) {
@@ -64,7 +76,7 @@ const BehaviourNode = ({ data, selected, id }) => {
       const val = modalData.getCurrentValue('start_at_offset_s');
       const num = val === '' || val === undefined ? NaN : Number(val);
       if (!Number.isFinite(num) || num < 0) {
-        window.alert('Start after (seconds) must be a non-negative number when using relative start time.');
+        window.alert(t('alerts.behaviour.startAfterNonNegative'));
         return;
       }
     }
@@ -113,8 +125,8 @@ const BehaviourNode = ({ data, selected, id }) => {
   // Memoized attributes for display
   const attributes = useMemo(() => {
     const baseAttrs = [
-      { label: "Class", value: data.class || 'Not set' },
-      { label: "Type", value: data.type || 'Not set' },
+      { label: t("behaviour.class"), value: data.class || t('notSet') },
+      { label: t("behaviour.type"), value: data.type || t('notSet') },
     ];
 
     // Add type-specific attributes
@@ -124,20 +136,20 @@ const BehaviourNode = ({ data, selected, id }) => {
         value: formatPeriodForDisplay(data.period)
       });
       if ((data.start_at_mode || 'absolute') === 'relative') {
-        baseAttrs.push({ label: 'Start After (s)', value: data.start_at_offset_s ?? 'Not set' });
+        baseAttrs.push({ label: t("behaviour.startAfter"), value: data.start_at_offset_s ?? t('notSet') });
       } else {
-        baseAttrs.push({ label: 'Start At', value: formatDateForDisplay(data.start_at) });
+        baseAttrs.push({ label: t("behaviour.startAt"), value: formatDateForDisplay(data.start_at) });
       }
     } else if (data.type === 'TimeoutBehaviour') {
       if ((data.start_at_mode || 'absolute') === 'relative') {
-        baseAttrs.push({ label: 'Start After (s)', value: data.start_at_offset_s ?? 'Not set' });
+        baseAttrs.push({ label: t("behaviour.startAfter"), value: data.start_at_offset_s ?? t('notSet') });
       } else {
-        baseAttrs.push({ label: 'Start At', value: formatDateForDisplay(data.start_at) });
+        baseAttrs.push({ label: t("behaviour.startAt"), value: formatDateForDisplay(data.start_at) });
       }
     }
 
     return baseAttrs;
-  }, [data]);
+  }, [data, t]);
 
   // Check if valid
   const isValid = Object.keys(modalData.errors).length === 0;
@@ -151,15 +163,15 @@ const BehaviourNode = ({ data, selected, id }) => {
         selected={selected}
         onDoubleClick={handleDoubleClick}
         icon={BEHAVIOUR_CONFIG.icon}
-        title={data.title || BEHAVIOUR_CONFIG.title}
+        title={data.title || t(BEHAVIOUR_CONFIG.titleKey || '', BEHAVIOUR_CONFIG.title)}
         attributes={attributes}
         handles={BEHAVIOUR_CONFIG.handles}
         className="behaviour-node"
       >
         <NodeConfigurationModal
           open={modalData.modalOpen}
-          title={modalData.getCurrentValue('title') || BEHAVIOUR_CONFIG.title}
-          subtitle={BEHAVIOUR_CONFIG.subtitle}
+          title={modalData.getCurrentValue('title') || t(BEHAVIOUR_CONFIG.titleKey || '', BEHAVIOUR_CONFIG.title)}
+          subtitle={t(BEHAVIOUR_CONFIG.subtitleKey || '', BEHAVIOUR_CONFIG.subtitle)}
           onClose={handleModalClose}
           onSave={handleSave}
           onTitleChange={(newTitle) => modalData.handleTempChange('title', newTitle)}

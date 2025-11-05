@@ -7,6 +7,7 @@ import Home from './pages/Home.jsx'
 import { ThemeProvider } from '@mui/material/styles'
 import { useEffect, useMemo, useState } from 'react'
 import { getTheme } from './theme'
+import { I18nProvider } from './i18n/I18nProvider'
 
 function AppRoot() {
   const [mode, setMode] = useState(() => {
@@ -48,13 +49,15 @@ function AppRoot() {
 
   return (
     <ThemeProvider theme={theme}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/editor" element={<FlowEditor />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <I18nProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/editor" element={<FlowEditor />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </I18nProvider>
     </ThemeProvider>
   );
 }

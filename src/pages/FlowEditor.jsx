@@ -20,7 +20,8 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import CodeIcon from '@mui/icons-material/Code';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 
-import NodeToolbar from "../components/ui/NodeToolbar";
+import NodeToolBar from "../components/FlowEditToolBar/NodeToolBar";
+import { useI18n } from "../i18n/I18nProvider";
 import { useFlowEditor } from "../hooks/useFlowEditor";
 import { useNodeOperations } from "../hooks/useNodeOperations";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
@@ -33,6 +34,7 @@ import { fetchExampleById } from '../services/examplesService';
 import "@xyflow/react/dist/style.css";
 
 export default function FlowEditor() {
+  const { t } = useI18n();
   const reactFlowWrapper = useRef(null);
   const [searchParams] = useSearchParams();
   const [initialized, setInitialized] = useState(false);
@@ -141,7 +143,7 @@ export default function FlowEditor() {
 
   const handleBackToHome = () => {
     if (nodes.length > 0) {
-      const save = window.confirm("Hay cambios en el lienzo. ¿Quieres guardar el flujo antes de salir?");
+      const save = window.confirm(t('editor.confirmLeave'));
       if (save) {
         try { saveWithMeta(); } catch (e) {}
       }
@@ -154,7 +156,7 @@ export default function FlowEditor() {
         {/* Top AppBar for editor actions */}
         <AppBar position="static" color="primary" elevation={1}>
           <Toolbar>
-            <Tooltip title="Volver a inicio">
+            <Tooltip title={t('editor.backToHome')}>
               <span>
                 <IconButton color="inherit" onClick={handleBackToHome} aria-label="back-to-home">
                   <ArrowBackIcon />
@@ -162,31 +164,31 @@ export default function FlowEditor() {
               </span>
             </Tooltip>
             <Typography variant="h6" component="div" sx={{ ml: 1 }}>
-              Editor de flujos
+              {t('editor.title')}
             </Typography>
             <Box sx={{ flexGrow: 1 }} />
-            <Tooltip title="Editar nombre y descripción">
+            <Tooltip title={t('editor.editMeta')}>
               <span>
                 <IconButton color="inherit" onClick={() => setMetaOpen(true)} aria-label="edit-meta">
                   <EditNoteIcon />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Generar código">
+            <Tooltip title={t('editor.generateCode')}>
               <span>
                 <IconButton color="inherit" onClick={handleGenerateSpade} disabled={isAnyModalOpen} aria-label="generate-code">
                   <CodeIcon />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Guardar flujo">
+            <Tooltip title={t('editor.saveFlow')}>
               <span>
                 <IconButton color="inherit" onClick={saveWithMeta} disabled={isAnyModalOpen} aria-label="save-flow">
                   <SaveIcon />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Cargar flujo">
+            <Tooltip title={t('editor.loadFlow')}>
               <span>
                 <IconButton color="inherit" onClick={handleLoad} disabled={isAnyModalOpen} aria-label="load-flow">
                   <FolderOpenIcon />
@@ -205,7 +207,7 @@ export default function FlowEditor() {
             position: 'relative',
           }}
         >
-          <NodeToolbar
+          <NodeToolBar
             onDragStart={onDragStart}
             onGenerateSpade={handleGenerateSpade}
             onSave={handleSave}
@@ -238,24 +240,23 @@ export default function FlowEditor() {
                 variant="dots"
                 gap={12}
                 size={1}
-                color={uiMode === 'dark' ? '#333333' : '#E2E8F0'}
               />
             </ReactFlow>
           </div>
         </div>
         {/* Dialog metadata */}
         <Dialog open={metaOpen} onClose={() => setMetaOpen(false)} fullWidth maxWidth="sm">
-          <DialogTitle>Propiedades del flujo</DialogTitle>
+          <DialogTitle>{t('editor.metaDialogTitle')}</DialogTitle>
           <DialogContent dividers>
             <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label="Nombre"
+                label={t('editor.name')}
                 value={flowName}
                 onChange={(e) => setFlowName(e.target.value)}
                 fullWidth
               />
               <TextField
-                label="Descripción"
+                label={t('editor.description')}
                 value={flowDescription}
                 onChange={(e) => setFlowDescription(e.target.value)}
                 fullWidth
@@ -265,8 +266,8 @@ export default function FlowEditor() {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setMetaOpen(false)}>Cancelar</Button>
-            <Button onClick={() => { setMetaOpen(false); }} variant="contained">Guardar</Button>
+            <Button onClick={() => setMetaOpen(false)}>{t('common.cancel')}</Button>
+            <Button onClick={() => { setMetaOpen(false); }} variant="contained">{t('common.save')}</Button>
           </DialogActions>
         </Dialog>
       </div>

@@ -18,12 +18,13 @@ import Chip from '@mui/material/Chip';
 import JidPreviewCard from './JidPreviewCard';
 import { useAgentGeneralFields } from '../../../hooks/useAgentGeneralFields';
 import { useAgentKnowledgeFields } from '../../../hooks/useAgentKnowledgeFields';
-
+import { useI18n } from '../../../i18n/I18nProvider';
 import "./AgentNode.css";
 
 // Utility moved to utils/agentUtils.js
 
 const AgentNode = ({ data, selected, id }) => {
+  const { t } = useI18n();
   // Custom hook for modal data management
   const modalData = useModalData(data, AGENT_CONFIG.requiredFields);
   const [exclusiveOpen, setExclusiveOpen] = React.useState(false);
@@ -81,16 +82,16 @@ const AgentNode = ({ data, selected, id }) => {
   const attributes = useMemo(() => {
     const metadataCount = Object.keys(data.metadata || {}).length;
     const memoData= [
-      { label: "Class", value: data.class || 'Not set' },
-      { label: "Name", value: data.name || 'Not set' },
-      { label: "Host", value: data.host || 'Not set' },
-      { label: "Port", value: data.port || 5222 },
-      { label: "Verify Security", value: data.verify_security === true ? 'Enabled' : 'Disabled' },
-      { 
-        label: "Knowledge", 
+      { label: t('agent.class'), value: data.class || t('notSet') },
+      { label: t('agent.name'), value: data.name || t('notSet') },
+      { label: t('agent.host'), value: data.host || t('notSet') },
+      { label: t('agent.port'), value: data.port || 5222 },
+      { label: t('agent.verifySecurity'), value: data.verify_security === true ? t('enabled') : t('disabled') },
+      {
+        label: t('agent.knowledge'),
         value: (
-          <Chip 
-            label={`${metadataCount} ${metadataCount === 1 ? 'entry' : 'entries'}`} 
+          <Chip
+            label={`${metadataCount} ${metadataCount === 1 ? t('entry') : t('entries')}`}
             color={metadataCount > 0 ? 'success' : 'default'}
             size="small"
           />
@@ -101,14 +102,13 @@ const AgentNode = ({ data, selected, id }) => {
     const kindAttrs = (agentKinds[kind]?.attributes?.(data) || []).filter(attr => attr.label !== 'Kind');
     memoData.push(...kindAttrs);
     return memoData;
-  }, [data]);
+  }, [data, t]);
 
   // Check if valid
   const isValid = Object.keys(modalData.errors).length === 0;
   const kind = data.kind || AGENT_KIND.STANDARD;
   const badge = agentKinds[kind]?.badge;
-  const kindLabel = badge?.label || null;
-  const baseTitle = data.title || AGENT_CONFIG.title;
+  const baseTitle = data.title || t(AGENT_CONFIG.titleKey || '', AGENT_CONFIG.title);
   const headerTitle = baseTitle;
   const headerActions = badge ? (
     <Chip size="small" label={badge.label} color={badge.color} variant="outlined" />
@@ -142,14 +142,14 @@ const AgentNode = ({ data, selected, id }) => {
         {kind !== AGENT_KIND.STANDARD && (
           <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
             <Button size="medium" variant="outlined" onClick={() => setExclusiveOpen(true)}>
-              {kind === AGENT_KIND.BDI ? 'BDI settings' : 'LLM settings'}
+              {kind === AGENT_KIND.BDI ? t('agent.bdiSettings') : t('agent.llmSettings')}
             </Button>
           </Box>
         )}
         <NodeConfigurationModal
           open={modalData.modalOpen}
-          title={modalData.getCurrentValue('title') || AGENT_CONFIG.title}
-          subtitle={AGENT_CONFIG.subtitle}
+          title={modalData.getCurrentValue('title') || t(AGENT_CONFIG.titleKey || '', AGENT_CONFIG.title)}
+          subtitle={t(AGENT_CONFIG.subtitleKey || '', AGENT_CONFIG.subtitle)}
           onClose={handleModalClose}
           onSave={handleSave}
           onTitleChange={(newTitle) => modalData.handleTempChange('title', newTitle)}
@@ -176,8 +176,8 @@ const AgentNode = ({ data, selected, id }) => {
         {kind !== AGENT_KIND.STANDARD && (
           <NodeConfigurationModal
             open={exclusiveOpen}
-            title={kind === AGENT_KIND.BDI ? 'BDI Configuration' : 'LLM Configuration'}
-            subtitle={kind === AGENT_KIND.BDI ? 'Exclusive BDI settings' : 'Exclusive LLM settings'}
+            title={kind === AGENT_KIND.BDI ? t('agent.bdiConfiguration') : t('agent.llmConfiguration')}
+            subtitle={kind === AGENT_KIND.BDI ? t('agent.exclusiveBdiSettings') : t('agent.exclusiveLlmSettings')}
             onClose={() => setExclusiveOpen(false)}
             onSave={() => setExclusiveOpen(false)}
             onTitleChange={() => {}}

@@ -5,44 +5,53 @@ import behaviourSVG from "../assets/nodeSVG/behaviour.svg";
 import templateSVG from "../assets/nodeSVG/template.svg";
 import messageSVG from "../assets/nodeSVG/message.svg";
 export const AGENT_CONFIG = {
+
   requiredFields: ['class', 'name', 'host'],
   icon: agentSVG,
+  // i18n keys plus fallbacks
   title: "Agent",
+  titleKey: "nodes.agent.title",
   subtitle: "Agent Configuration",
+  subtitleKey: "nodes.agent.subtitle",
   handles: [
     {
       type: "target",
       position: Position.Left,
       id: "friendship-target",
       isConnectable: true,
-      title: "friendship (target)"
+      title: "friendship (target)",
+      titleKey: "nodes.agent.handles.friendshipTarget"
     },
     {
       type: "target",
       position: Position.Left,
       id: "inheritance-target",
       isConnectable: true,
-      title: "inherits from"
+      title: "inherits from",
+      titleKey: "nodes.agent.handles.inheritsFrom"
     },
     {
       type: "source",
       position: Position.Right,
       id: "friendship-source",
-      title: "friendship (source)"
+      title: "friendship (source)",
+      titleKey: "nodes.agent.handles.friendshipSource"
     },
     {
       type: "source",
       position: Position.Right,
       id: "behaviour",
       isConnectable: true,
-      title: "behaviour"
+      title: "behaviour",
+      titleKey: "nodes.agent.handles.behaviour"
     },
     {
       type: "source",
       position: Position.Right,
       id: "inheritance-source",
       isConnectable: true,
-      title: "inherited by"
+      title: "inherited by",
+      titleKey: "nodes.agent.handles.inheritedBy"
     }
   ]
 };
@@ -51,28 +60,33 @@ export const BEHAVIOUR_CONFIG = {
   requiredFields: ['class', 'type'],
   icon: behaviourSVG,
   title: "Behaviour",
+  titleKey: "nodes.behaviour.title",
   subtitle: "Behaviour Configuration",
+  subtitleKey: "nodes.behaviour.subtitle",
   handles: [
     {
       type: "target",
       position: Position.Left,
       id: "behaviour",
       isConnectable: true,
-      title: "used by agent"
+      title: "used by agent",
+      titleKey: "nodes.behaviour.handles.usedByAgent"
     },
     {
       type: "source",
       position: Position.Right,
       id: "message",
       isConnectable: true,
-      title: "uses message"
+      title: "uses message",
+      titleKey: "nodes.behaviour.handles.usesMessage"
     },
     {
       type: "source",
       position: Position.Right,
       id: "template",
       isConnectable: true,
-      title: "uses template"
+      title: "uses template",
+      titleKey: "nodes.behaviour.handles.usesTemplate"
     }
   ]
 };
@@ -176,14 +190,17 @@ export const TEMPLATE_CONFIG = {
   requiredFields: [],
   icon: templateSVG,
   title: "Template",
+  titleKey: "nodes.template.title",
   subtitle: "Message Template Configuration",
+  subtitleKey: "nodes.template.subtitle",
   handles: [
     {
       type: "target",
       position: Position.Left,
       id: "template",
       isConnectable: true,
-      title: "used by behaviour"
+      title: "used by behaviour",
+      titleKey: "nodes.template.handles.usedByBehaviour"
     }
   ]
 };
@@ -192,14 +209,17 @@ export const MESSAGE_CONFIG = {
   requiredFields: [],
   icon: messageSVG,
   title: "Message",
+  titleKey: "nodes.message.title",
   subtitle: "Message Configuration",
+  subtitleKey: "nodes.message.subtitle",
   handles: [
     {
       type: "target",
       position: Position.Left,
       id: "message",
       isConnectable: true,
-      title: "used by behaviour"
+      title: "used by behaviour",
+      titleKey: "nodes.message.handles.usedByBehaviour"
     }
   ]
 };

@@ -1,4 +1,4 @@
-import './NodeBase.css';
+import './NodeBaseToolBar.css';
 
 export default function BaseNode({ image, title, selected}) {
 
@@ -8,7 +8,7 @@ export default function BaseNode({ image, title, selected}) {
       style={{ position: 'relative' }}
     >
       <div className="base-node-header">
-        <img src={image} alt="" className="base-node-img" />
+        <img src={image} alt="" className="node-header-img" />
         <span className="base-node-title">{title}</span>
       </div>
     </div>

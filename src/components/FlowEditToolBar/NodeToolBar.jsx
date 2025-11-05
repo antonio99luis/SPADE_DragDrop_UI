@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import BaseNode from "../nodes/shared/NodeBase";
+import BaseNode from "./NodeBaseToolBar";
 import agentSVG from "../../assets/nodeSVG/agent.svg";
 import behaviourSVG from "../../assets/nodeSVG/behaviour.svg";
 import templateSVG from "../../assets/nodeSVG/template.svg";
@@ -9,8 +9,8 @@ import Fab from "@mui/material/Fab";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove"; // Import the minus icon
 import TextField from "@mui/material/TextField";
-
-import "./NodeToolbar.css";
+import { useI18n } from '../../i18n/I18nProvider';
+import "./NodeToolBar.css";
 
 const SPADE_NODES = [
   { type: "agent", label: "Agent", image: agentSVG },
@@ -21,16 +21,14 @@ const SPADE_NODES = [
   { type: "message", label: "Message", image: messageSVG },
 ];
 
-export default function NodeToolbar({
+export default function NodeToolBar({
   onDragStart,
-  onGenerateSpade,
-  onSave,
-  onLoad,
   modalBlocked = false
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const menuRef = useRef();
+  const { t, lang, setLanguage } = useI18n();
 
   // Close menu on outside click
   useEffect(() => {
@@ -64,17 +62,17 @@ export default function NodeToolbar({
         aria-label={open ? "close" : "add"}
         onClick={handleButtonClick}
         disabled={modalBlocked}
-        title={modalBlocked ? "Close modal first" : "Add Node"}
+        title={modalBlocked ? t('toolbar.closeModalFirst') : t('toolbar.addNodes')}
       >
         {open ? <RemoveIcon /> : <AddIcon />}
       </Fab>
       {open && (
         <div className="dropdown-node-menu" ref={menuRef}>
           <div className="dropdown-node-menu-header">
-            <div className="dropdown-node-menu-title">Add Nodes</div>
+            <div className="dropdown-node-menu-title">{t('toolbar.addNodes')}</div>
             <TextField
               className="dropdown-node-menu-search"
-              label="Search nodes"
+              label={t('toolbar.searchNodes')}
               size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -83,9 +81,9 @@ export default function NodeToolbar({
 
           <div className="dropdown-node-menu-content">
             <div className="dropdown-node-menu-section">
-              <div className="dropdown-node-menu-section-title">SPADE nodes</div>
+              <div className="dropdown-node-menu-section-title">{t('toolbar.spadeNodes')}</div>
               {filterNodes(SPADE_NODES).length === 0 && (
-                <div className="dropdown-node-menu-empty">No results</div>
+                <div className="dropdown-node-menu-empty">{t('toolbar.noResults')}</div>
               )}
               {filterNodes(SPADE_NODES).map((node) => (
                 <div
@@ -103,7 +101,7 @@ export default function NodeToolbar({
                 draggable
                 onDragStart={(e) => onDragStart(e, "stickyNote")}
               >
-                <BaseNode image={stickySVG} title={"Sticky Note"} />
+                <BaseNode image={stickySVG} title={t('toolbar.stickyNote')} />
               </div>
             </div>
             <div className="dropdown-node-menu-section">
