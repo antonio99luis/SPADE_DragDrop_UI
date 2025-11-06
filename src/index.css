@@ -1,4 +1,22 @@
 
+/* Global layout reset to avoid unintended scrollbars */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent outer page scroll; inner areas manage their own overflow */
+body {
+  overflow: hidden;
+}
+
+/* Make sizing predictable */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

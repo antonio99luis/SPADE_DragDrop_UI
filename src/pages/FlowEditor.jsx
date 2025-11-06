@@ -152,7 +152,7 @@ export default function FlowEditor() {
   };
 
   return (
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100vh' }}>
         {/* Top AppBar for editor actions */}
         <AppBar position="static" color="primary" elevation={1}>
           <Toolbar>

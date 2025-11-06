@@ -63,7 +63,7 @@ function AppRoot() {
 }
 
 createRoot(document.getElementById('root')).render(
-  //<StrictMode>
+  <StrictMode>
     <AppRoot />
-  //</StrictMode>,
+  </StrictMode>
 )
