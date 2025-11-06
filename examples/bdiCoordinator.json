@@ -17,8 +17,8 @@
         "host": "localhost",
         "kind": "bdi",
         "beliefs": [
-          "60",
           "task_params",
+          "60",
           "PLA"
         ],
         "bdiProgram": "// Coordinator ASL: Orquesta Tuner -> Validator -> Save con un reintento\n\n// Al recibir los parámetros de tarea, iniciar coordinación con intento 0\n+task_params(D, M) <-\n    +attempt(0);\n    !coordinate(D, M, 0).\n\n// Si aún no hay predicción, pedir ajuste (tuning)\n+!coordinate(D, M, Attempt) : not predicted(_, _, _, _) <-\n    .print(\"BDI: solicitando predicción al Tuner...\");\n    py.tune(D, M).\n\n// Cuando tengamos predicción, pedir validación\n+predicted(V, H, TE, TC) : task_params(D, M) <-\n    .print(\"BDI: validando predicción...\");\n    py.validate(V, H, TE, TC).\n\n// Si validación es OK: guardar y terminar\n+validation_ok : task_params(D, M) & predicted(V, H, TE, TC) <-\n    .print(\"BDI: guardando parámetros válidos...\");\n    py.save(D, M, V, H, TE, TC);\n    -predicted(V, H, TE, TC).\n\n// Si validación falla y es el primer intento: reintentar con +10 en dureza\n+validation_failed(Reason) : task_params(D, M) & predicted(V, H, TE, TC) & attempt(0) <-\n    .print(\"BDI: validación fallida (primer intento). Reintentando con +10 de dureza...\");\n    py.tune_adjust(D, M, 10);\n    -predicted(V, H, TE, TC);\n    -validation_failed(Reason);\n    -attempt(0);\n    +attempt(1).\n\n// Si vuelve a fallar tras reintento: reportar fallo y finalizar\n+validation_failed(Reason) : attempt(1) <-\n    .print(\"BDI: validación fallida tras reintento: \");\n    .print(Reason).\n",
@@ -27,8 +27,8 @@
         ],
         "title": "Coordinator",
         "beliefsObj": {
-          "60": "",
           "task_params": "",
+          "60": "",
           "PLA": ""
         },
         "password": "pass"
