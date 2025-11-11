@@ -24,6 +24,8 @@ const CodeConfigurationModal = ({
   buildCompletionProvider,
   customSyntax, // { id, monarch, conf, aliases }
   defaultCode, // optional: when provided, Reset will also fill editor with this
+  completionContext = {}, // Datos dinámicos: agente / behaviour / beliefs / funciones
+  autocompleteGroups = [], // NUEVO: lista de grupos a activar (p.e. ['agent','behavior','presence','knowledge','asl'])
 }) => {
   const completionDisposableRef = useRef(null);
   const [monacoTheme, setMonacoTheme] = useState(() => {
@@ -71,12 +73,25 @@ const CodeConfigurationModal = ({
 
     // Register completion provider if applicable
     if (buildCompletionProvider) {
-      const provider = buildCompletionProvider(monaco);
+      // Compatibilidad retro y nueva API con (monaco, { context, groups })
+      let provider;
+      try {
+        if (buildCompletionProvider.length >= 2) {
+          // Asumimos nueva firma buildCompletionProvider(monaco, { context, groups })
+          provider = buildCompletionProvider(monaco, { context: completionContext, groups: autocompleteGroups });
+        } else {
+          // Antigua firma monaco => provider
+          provider = buildCompletionProvider(monaco);
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[CodeConfigurationModal] Error construyendo completion provider:', e);
+      }
       if (provider && language) {
         completionDisposableRef.current = monaco.languages.registerCompletionItemProvider(language, provider);
       }
     } else if (language === 'python') {
-      completionDisposableRef.current = monaco.languages.registerCompletionItemProvider('python', buildPythonCompletionProvider(monaco));
+      completionDisposableRef.current = monaco.languages.registerCompletionItemProvider('python', buildPythonCompletionProvider(monaco, { context: completionContext, groups: autocompleteGroups }));
     }
 
     // Configure editor for proper autocompletion
@@ -160,7 +175,8 @@ const CodeConfigurationModal = ({
                 minimap: { enabled: false },
                 automaticLayout: true,
                 wordWrap: 'on',
-                scrollBeyondLastLine: false
+                scrollBeyondLastLine: false,
+                ...editorOptions,
               }}
             />
           </Box>

@@ -5,6 +5,8 @@ import Button from '@mui/material/Button';
 import KeyValueTable from '../../../forms/KeyValueTable';
 import CodeConfigurationModal from '../../../modals/CodeConfigurationModal';
 import { aslMonarch } from '../../../../editor/dsl/aslMonarch';
+import { buildAslCompletionProvider } from '../../../../editor/providers/aslProvider';
+import { buildAslCompletionContext } from '../../../../editor/autocomplete/extractors/aslContext';
 import { beliefsArrayToObject, beliefsObjectToArray, functionsTextToArray } from '../../../../domain/agents/normalizers';
 
 const DEFAULT_ASL = `!start.\n\n+!start <-\n    .my_function(4, R);\n    .my_action(R).`;
@@ -13,6 +15,7 @@ const DEFAULT_FUNC = `def add_custom_actions(self, actions):\n    @actions.add_f
 export default function ExclusiveSettingsBDI({ modalData, id }) {
   const [openAsl, setOpenAsl] = React.useState(false);
   const [openPy, setOpenPy] = React.useState(false);
+  const [aslContextSnap, setAslContextSnap] = React.useState(null);
 
   const bdiProgram = modalData.getCurrentValue('bdiProgram') || DEFAULT_ASL;
   const bdiFunctionsText = modalData.getCurrentValue('bdiFunctionsText');
@@ -41,6 +44,8 @@ export default function ExclusiveSettingsBDI({ modalData, id }) {
     modalData.handleTempChange('beliefs', beliefsObjectToArray(newMap));
   };
 
+  // Nota: el contexto de ASL se genera sólo al abrir el modal (snapshot en aslContextSnap)
+
   return (
     <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
       <KeyValueTable
@@ -57,7 +62,17 @@ export default function ExclusiveSettingsBDI({ modalData, id }) {
       />
 
       <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button size="big" variant="outlined" onClick={() => setOpenAsl(true)}>
+        <Button size="big" variant="outlined" onClick={() => {
+          // Build a snapshot of the ASL completion context when opening the modal
+          const snap = buildAslCompletionContext({
+            bdiFunctionCode: bdiFunctionsCode,
+            aslCode: bdiProgram,
+            extraBeliefs: beliefsObjectToArray(beliefsObj),
+            goals: [],
+          });
+          setAslContextSnap(snap);
+          setOpenAsl(true);
+        }}>
           Edit BDI Program (.asl)
         </Button>
         <Button size="big" variant="outlined" onClick={() => setOpenPy(true)}>
@@ -73,11 +88,20 @@ export default function ExclusiveSettingsBDI({ modalData, id }) {
         defaultCode={DEFAULT_ASL}
         onChange={(val) => modalData.handleTempChange('bdiProgram', val || '')}
         onReset={() => modalData.handleTempChange('bdiProgram', DEFAULT_ASL)}
-        onCancel={() => setOpenAsl(false)}
-        onSave={() => setOpenAsl(false)}
+        onCancel={() => { setOpenAsl(false); setAslContextSnap(null); }}
+        onSave={() => { setOpenAsl(false); setAslContextSnap(null); }}
         language="asl"
         customSyntax={aslMonarch}
-        helperText="ASL: use +! for achievement goals, +? for test goals, and <- to start plan bodies."
+        // Autocomplete: beliefs, goals, functions; escribe 'py.' para ver funciones Python del agente
+        helperText="ASL: usa +! para metas, +? para test, <- para el cuerpo."
+        buildCompletionProvider={(monaco, { context, groups }) => buildAslCompletionProvider(monaco, { context, groups })}
+        autocompleteGroups={[
+          'asl.planSnippets',
+          'asl.goals',
+          'asl.beliefs',
+          'asl.functions',
+        ]}
+        completionContext={aslContextSnap || { beliefs: [], functions: [], goals: [] }}
       />
 
       {/* Python Functions Editor Modal */}

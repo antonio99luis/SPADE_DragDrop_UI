@@ -314,6 +314,32 @@ const BehaviourNode = ({ data, selected, id }) => {
           onCancel={modalData.closeCodeModal}      // Reverts and closes  
           onReset={modalData.resetCode}            // Resets to default (stays open)
           title="Configure Behaviour Code"
+          // Activamos grupos orientados a behavior
+          autocompleteGroups={[
+            'common.pythonKeywords',
+            'behavior.selfMethods',
+            'behavior.controlChars',
+            'agent.visibility',
+            'agent.behaviours',
+            'knowledge.keys',
+          ]}
+          // Construimos un contexto lo más rico posible con los datos disponibles
+          completionContext={{
+            scope: 'behavior',
+            agent: {
+              // knowledge del agente padre si está disponible en data.parentAgent.metadata
+              variables: Object.keys((data.parentAgent && data.parentAgent.metadata) || {}),
+              // agentes visibles: admite ['jid', {name,jid}] y caemos a [] si no hay datos
+              visibleAgents: data.visibleAgents || (data.parentAgent && data.parentAgent.friends) || [],
+              // behaviours declarados en el agente (si existen)
+              behaviours: (data.parentAgent && data.parentAgent.behaviours) || [],
+            },
+            behavior: {
+              name: data.class,
+              connectedBehaviors: data.connectedBehaviors || [],
+              knowledgeKeys: (data.behaviourKnowledgeKeys) || [],
+            }
+          }}
         />
       </BaseNode>
     </>
